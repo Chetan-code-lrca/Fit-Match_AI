@@ -80,7 +80,7 @@ export function ChatStylist() {
     <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
       {/* Chat thread */}
       <section className="flex flex-col rounded-[28px] border border-white/10 bg-white/5">
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 max-h-[520px]">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 max-h-[60vh]">
           {messages.map((msg, index) => (
             <div key={index} className={msg.role === "user" ? "flex justify-end" : "flex flex-col gap-3"}>
               {msg.role === "user" ? (

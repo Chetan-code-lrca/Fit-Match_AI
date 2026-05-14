@@ -21,7 +21,7 @@ type UploadedFile = {
 };
 
 const clothingTips = [
-  "Centre the clothing item in frame for best color detection.",
+  "Center the clothing item in frame for best color detection.",
   "Plain backgrounds improve clothing segmentation accuracy.",
   "Natural light gives the most accurate color extraction.",
   "Upload one item per image for precise category tagging.",
@@ -120,7 +120,7 @@ export function UploadStudio() {
           <h2 className="text-2xl font-semibold">Upload your clothing items</h2>
           <p className="text-sm leading-6 text-zinc-400">
             Upload individual garment photos or mirror selfies. The AI extracts clothing colors
-            from the centre of each image, ignoring background walls and lighting artifacts.
+            from the centre of each image, ignoring background walls and lighting — only the center 65% of each image is sampled.
           </p>
 
           <label className="flex cursor-pointer flex-col items-center justify-center rounded-[24px] border border-white/10 bg-white/5 px-6 py-12 text-center transition hover:border-white/30 hover:bg-white/10">
@@ -165,7 +165,7 @@ export function UploadStudio() {
           <div>
             <h2 className="text-2xl font-semibold">AI wardrobe analysis</h2>
             <p className="mt-1 text-sm text-zinc-400">
-              Clothing colors extracted from the garment region — background excluded.
+              Clothing colors sampled from the center 65% of the image — background walls excluded.
             </p>
           </div>
           {isLoading ? (
@@ -216,7 +216,7 @@ export function UploadStudio() {
                   {extractingColors ? (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                       <div className="rounded-2xl border border-white/20 bg-black/60 px-4 py-2 text-xs text-white">
-                        Scanning clothing region…
+                        Scanning clothing area…
                       </div>
                     </div>
                   ) : null}

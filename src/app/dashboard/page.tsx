@@ -110,7 +110,7 @@ export default function DashboardPage() {
             delay={0.3}
             className="col-span-2 rounded-[24px] border border-white/10 bg-black/30 p-5"
           >
-            <p className="text-xs text-zinc-500">Favourite colors</p>
+            <p className="text-xs text-zinc-500">Favorite colors</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {userProfile.favoriteColors.map((color) => (
                 <div key={color} className="flex items-center gap-1.5">
