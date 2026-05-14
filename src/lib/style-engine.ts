@@ -160,6 +160,47 @@ export function buildOutfitOfTheDay() {
   };
 }
 
+export type GeneratedOutfit = {
+  outfitName: string;
+  score: number;
+  reasoning: string;
+  occasion: string;
+  items: WardrobeItem[];
+};
+
+const outfitSeeds: Array<{ itemId: string; occasion: WardrobeOccasion }> = [
+  { itemId: "black-hoodie", occasion: "streetwear" },
+  { itemId: "cream-tee", occasion: "campus" },
+  { itemId: "olive-overshirt", occasion: "smart-casual" },
+  { itemId: "navy-knit", occasion: "night-out" },
+  { itemId: "beige-cargo", occasion: "travel" },
+  { itemId: "charcoal-trouser", occasion: "smart-casual" },
+  { itemId: "black-denim", occasion: "streetwear" },
+  { itemId: "white-sneakers", occasion: "campus" },
+];
+
+export function generateOutfits(baseItemId?: string, count = 4): GeneratedOutfit[] {
+  const seeds = baseItemId
+    ? Array.from({ length: count }, (_, i) => ({
+        itemId: baseItemId,
+        occasion: (["campus", "streetwear", "smart-casual", "night-out"] as WardrobeOccasion[])[
+          i % 4
+        ],
+      }))
+    : outfitSeeds.slice(0, count);
+
+  return seeds.map(({ itemId, occasion }) => {
+    const rec = buildRecommendations(itemId, occasion)[0];
+    return {
+      outfitName: rec.title,
+      score: rec.confidenceScore,
+      reasoning: rec.explanation,
+      occasion: rec.occasion,
+      items: rec.items,
+    };
+  });
+}
+
 export function buildChatReply(prompt: string) {
   const normalizedPrompt = prompt.toLowerCase();
 

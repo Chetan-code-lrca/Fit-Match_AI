@@ -21,6 +21,8 @@ export type WardrobeItem = {
   occasion: WardrobeOccasion[];
   season: Array<"spring" | "summer" | "autumn" | "winter">;
   tags: string[];
+  imageUrl?: string;
+  style?: string;
 };
 
 export type OutfitRecommendation = {

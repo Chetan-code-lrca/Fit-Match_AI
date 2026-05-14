@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
 import { FadeIn } from "@/components/fade-in";
+import { ItemThumbnail } from "@/components/outfit-card";
 import { wardrobeItems } from "@/lib/fitmatch-data";
 import { buildRecommendations } from "@/lib/style-engine";
 
@@ -71,7 +72,17 @@ export default async function SuggestionsPage({ searchParams }: SuggestionsPageP
               </span>
             </div>
             <p className="mt-4 text-sm leading-6 text-zinc-300">{recommendation.explanation}</p>
-            <div className="mt-6 grid gap-3">
+            <div className="mt-6 flex flex-wrap gap-3">
+              {recommendation.items.map((item) => (
+                <div key={item.id} className="flex flex-col items-center gap-1">
+                  <ItemThumbnail item={item} size="sm" />
+                  <span className="max-w-[56px] truncate text-center text-[10px] text-zinc-400">
+                    {item.name.split(" ")[0]}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 grid gap-3">
               {[
                 ["Aesthetic", recommendation.aestheticScore],
                 ["Color harmony", recommendation.colorHarmonyScore],
