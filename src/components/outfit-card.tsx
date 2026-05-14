@@ -28,6 +28,7 @@ export function ItemThumbnail({ item, size = "md" }: ItemThumbnailProps) {
           fill
           className="object-cover"
           sizes="80px"
+          unoptimized
         />
       </div>
     );
@@ -47,7 +48,78 @@ export function ItemThumbnail({ item, size = "md" }: ItemThumbnailProps) {
   );
 }
 
-/** Vertical outfit stack: layer/top -> bottom -> shoes -> accessories in a column */
+type OutfitItemRowProps = {
+  item: WardrobeItem;
+  isAccessory?: boolean;
+};
+
+function OutfitItemRow({ item, isAccessory = false }: OutfitItemRowProps) {
+  const hasImage = !!(item.extractedItemImage ?? item.imageUrl);
+  const imgSrc = item.extractedItemImage ?? item.imageUrl;
+
+  return (
+    <div
+      className={`group/item relative flex items-center gap-3 rounded-[16px] border border-white/8 bg-white/5 p-2 transition hover:border-white/20 hover:bg-white/10 ${
+        isAccessory ? "" : "overflow-hidden"
+      }`}
+    >
+      {/* Item image – large square */}
+      {hasImage && imgSrc ? (
+        <div
+          className={`relative flex-shrink-0 overflow-hidden rounded-[12px] border border-white/10 ${
+            isAccessory ? "h-12 w-12" : "h-20 w-20"
+          }`}
+        >
+          <Image
+            src={imgSrc}
+            alt={item.name}
+            fill
+            className="object-cover transition duration-300 group-hover/item:scale-105"
+            sizes={isAccessory ? "48px" : "80px"}
+            unoptimized
+          />
+        </div>
+      ) : (
+        <div
+          className={`flex flex-shrink-0 flex-col items-center justify-center gap-1 rounded-[12px] border border-white/10 ${
+            isAccessory ? "h-12 w-12" : "h-20 w-20"
+          }`}
+          style={{ backgroundColor: resolveColorHex(item.color) }}
+        >
+          <span
+            className={`leading-none ${isAccessory ? "text-xl" : "text-3xl"}`}
+            role="img"
+            aria-label={categoryMeta[item.category].label}
+          >
+            {categoryMeta[item.category].emoji}
+          </span>
+        </div>
+      )}
+
+      {/* Text info */}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-semibold text-white">{item.name}</p>
+        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          <span
+            className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-full border border-white/20"
+            style={{ backgroundColor: resolveColorHex(item.color) }}
+          />
+          <span className="text-[10px] capitalize text-zinc-500">{item.color}</span>
+          {item.style ? (
+            <span className="rounded-full border border-white/10 px-1.5 py-0.5 text-[9px] text-zinc-500">
+              {item.style}
+            </span>
+          ) : null}
+        </div>
+        <p className="mt-1 text-[10px] uppercase tracking-wider text-zinc-600">
+          {categoryMeta[item.category].label}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/** Vertical outfit stack: layer/top → bottom → shoes → accessories */
 function OutfitStack({ items }: { items: WardrobeItem[] }) {
   const layers = items.filter((i) => i.category === "layer" || i.category === "top");
   const bottoms = items.filter((i) => i.category === "bottom");
@@ -56,30 +128,14 @@ function OutfitStack({ items }: { items: WardrobeItem[] }) {
   const ordered = [...layers, ...bottoms, ...shoes, ...accessories];
 
   return (
-    <div className="flex flex-col items-center gap-2 py-2">
-      {ordered.map((item) => {
-        const isAccessory = item.category === "accessory";
-        return (
-          <div key={item.id} className="flex w-full items-center gap-3">
-            <ItemThumbnail item={item} size={isAccessory ? "sm" : "md"} />
-            <div className="min-w-0">
-              <p className="truncate text-xs font-semibold text-white">{item.name}</p>
-              <div className="mt-0.5 flex items-center gap-1.5">
-                <span
-                  className="inline-block h-2 w-2 rounded-full border border-white/20"
-                  style={{ backgroundColor: resolveColorHex(item.color) }}
-                />
-                <span className="text-[10px] capitalize text-zinc-500">{item.color}</span>
-                {item.style ? (
-                  <span className="rounded-full border border-white/10 px-1.5 py-0.5 text-[9px] text-zinc-500">
-                    {item.style}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        );
-      })}
+    <div className="flex flex-col gap-2 py-1">
+      {ordered.map((item) => (
+        <OutfitItemRow
+          key={item.id}
+          item={item}
+          isAccessory={item.category === "accessory"}
+        />
+      ))}
     </div>
   );
 }
@@ -111,7 +167,7 @@ export function OutfitCard({
         : "bg-zinc-700 text-white";
 
   return (
-    <article className="flex flex-col gap-4 rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur transition hover:border-white/20">
+    <article className="group flex flex-col gap-4 rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur transition hover:border-white/25 hover:shadow-lg hover:shadow-white/5">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -125,8 +181,8 @@ export function OutfitCard({
         </span>
       </div>
 
-      {/* Visual outfit stack */}
-      <div className="rounded-[20px] border border-white/8 bg-black/30 px-4 py-2">
+      {/* Visual outfit stack with real item images */}
+      <div className="rounded-[20px] border border-white/8 bg-black/30 px-3 py-3">
         <OutfitStack items={items} />
       </div>
 
@@ -137,7 +193,7 @@ export function OutfitCard({
           {Array.from(new Set(items.map((i) => i.color))).map((color) => (
             <span
               key={color}
-              className="h-4 w-4 rounded-full border border-white/20 shadow-sm"
+              className="h-4 w-4 rounded-full border border-white/20 shadow-sm transition hover:scale-125"
               style={{ backgroundColor: resolveColorHex(color) }}
               title={color}
             />

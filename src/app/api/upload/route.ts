@@ -1,6 +1,21 @@
+import fs from "fs";
+import path from "path";
+
 import { NextResponse } from "next/server";
 
 import { uploadFormats } from "@/lib/fitmatch-data";
+
+const UPLOADS_DIR = path.join(process.cwd(), "public", "uploads");
+
+function ensureUploadsDir() {
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+}
+
+function sanitizeFileName(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_").toLowerCase();
+}
 
 function inferTags(fileName: string) {
   const normalized = fileName.toLowerCase();
@@ -44,13 +59,29 @@ export async function POST(request: Request) {
     );
   }
 
-  const analysis = files.map((entry) => {
-    const file = entry as File;
-    return {
-      fileName: file.name,
-      ...inferTags(file.name),
-    };
-  });
+  ensureUploadsDir();
+
+  const analysis = await Promise.all(
+    files.map(async (entry) => {
+      const file = entry as File;
+      const timestamp = Date.now();
+      const ext = path.extname(file.name) || ".jpg";
+      const base = path.basename(file.name, ext);
+      const savedName = `${sanitizeFileName(base)}_${timestamp}${ext}`;
+      const savedPath = path.join(UPLOADS_DIR, savedName);
+
+      const buffer = Buffer.from(await file.arrayBuffer());
+      fs.writeFileSync(savedPath, buffer);
+
+      const imageUrl = `/uploads/${savedName}`;
+
+      return {
+        fileName: file.name,
+        imageUrl,
+        ...inferTags(file.name),
+      };
+    }),
+  );
 
   return NextResponse.json({ analysis });
 }

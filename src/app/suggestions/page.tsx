@@ -3,8 +3,11 @@ import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { FadeIn } from "@/components/fade-in";
 import { OutfitCard } from "@/components/outfit-card";
-import { wardrobeItems } from "@/lib/fitmatch-data";
+import { wardrobeItems as staticWardrobeItems } from "@/lib/fitmatch-data";
 import { buildRecommendations } from "@/lib/style-engine";
+import { readUserWardrobeItems } from "@/lib/wardrobe-server";
+
+export const dynamic = "force-dynamic";
 
 type SuggestionsPageProps = {
   searchParams?: Promise<{ item?: string; occasion?: string }>;
@@ -12,7 +15,20 @@ type SuggestionsPageProps = {
 
 export default async function SuggestionsPage({ searchParams }: SuggestionsPageProps) {
   const params = (await searchParams) ?? {};
-  const selectedItemId = params.item ?? "black-hoodie";
+
+  // Merge user-uploaded items (with real images) with static fallback items
+  const userItems = readUserWardrobeItems();
+  const wardrobeItems =
+    userItems.length > 0
+      ? // Prefer user items; fill missing categories with static items that aren't superseded
+        [
+          ...userItems,
+          ...staticWardrobeItems.filter(
+            (si) => !userItems.some((ui) => ui.id === si.id),
+          ),
+        ]
+      : staticWardrobeItems;
+
   const fallbackItem = wardrobeItems[0];
 
   if (!fallbackItem) {
@@ -25,9 +41,11 @@ export default async function SuggestionsPage({ searchParams }: SuggestionsPageP
     );
   }
 
+  const defaultItemId = userItems[0]?.id ?? "black-hoodie";
+  const selectedItemId = params.item ?? defaultItemId;
   const selectedItem =
     wardrobeItems.find((item) => item.id === selectedItemId) ?? fallbackItem;
-  const recommendations = buildRecommendations(selectedItem.id);
+  const recommendations = buildRecommendations(selectedItem.id, "campus", wardrobeItems);
 
   return (
     <AppShell
@@ -104,3 +122,4 @@ export default async function SuggestionsPage({ searchParams }: SuggestionsPageP
     </AppShell>
   );
 }
+
