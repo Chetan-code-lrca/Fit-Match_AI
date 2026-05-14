@@ -163,10 +163,43 @@ export function buildOutfitOfTheDay(customWardrobe?: WardrobeItem[]) {
   const dayIndex =
     dateKey.split("").reduce((total, character) => total + character.charCodeAt(0), 0) %
     wardrobe.length;
-  const seedItem = wardrobe[dayIndex] ?? staticWardrobeItems[0]!;
+  const seedItem = wardrobe[dayIndex] ?? staticWardrobeItems[0];
+  if (!seedItem) {
+    // Static wardrobe is empty — should never happen in practice
+    return {
+      id: "empty",
+      title: "No wardrobe items",
+      explanation: "Add clothing items to get outfit recommendations.",
+      occasion: "campus focus",
+      items: [],
+      aestheticScore: 0,
+      colorHarmonyScore: 0,
+      occasionMatchScore: 0,
+      confidenceScore: 0,
+      weatherSummary: "",
+      trendSummary: "",
+      rotationHint: "",
+    };
+  }
   const recommendation =
     buildRecommendations(seedItem.id, "smart-casual", wardrobe)[0] ??
-    buildRecommendations("black-hoodie", "smart-casual")[0]!;
+    buildRecommendations("black-hoodie", "smart-casual")[0];
+  if (!recommendation) {
+    return {
+      id: "fallback",
+      title: "No outfit available",
+      explanation: "Add more clothing items to generate outfit recommendations.",
+      occasion: "campus focus",
+      items: [],
+      aestheticScore: 0,
+      colorHarmonyScore: 0,
+      occasionMatchScore: 0,
+      confidenceScore: 0,
+      weatherSummary: "",
+      trendSummary: "",
+      rotationHint: "",
+    };
+  }
   const lastWornIds = recentOutfits.flatMap((outfit) => outfit.items);
   const rotationHint = recommendation.items.some((item) => lastWornIds.includes(item.id))
     ? "Rotated with a fresher shoe/layer pairing to avoid repeating yesterday's silhouette."

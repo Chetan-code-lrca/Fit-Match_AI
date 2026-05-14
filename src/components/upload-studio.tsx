@@ -73,7 +73,9 @@ export function UploadStudio() {
   function updateSaveForm(index: number, patch: Partial<SaveFormState>) {
     setSaveForms((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index]!, ...patch };
+      const current = next[index];
+      if (!current) return prev;
+      next[index] = { ...current, ...patch };
       return next;
     });
   }
@@ -103,7 +105,7 @@ export function UploadStudio() {
     prevPreviewUrls.current = previews.map((p) => p.previewUrl);
     setUploadedFiles(previews);
 
-    // Initialise save forms
+    // Initialize save forms
     setSaveForms(
       nextFiles.map((file) => ({
         name: file.name.replace(/\.[^.]+$/, "").replace(/[_-]/g, " "),
@@ -257,7 +259,7 @@ export function UploadStudio() {
           <h2 className="text-2xl font-semibold">Upload your clothing items</h2>
           <p className="text-sm leading-6 text-zinc-400">
             Upload individual garment photos or mirror selfies. The AI extracts clothing colors
-            from the centre of each image, ignoring background walls and lighting — only the center
+            from the center of each image, ignoring background walls and lighting — only the center
             65% of each image is sampled.
           </p>
 

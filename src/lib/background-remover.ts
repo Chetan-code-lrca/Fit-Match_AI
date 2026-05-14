@@ -208,9 +208,18 @@ export async function removeBackground(imageFile: File): Promise<string> {
 
 /** Convert a data-URL PNG back to a File object (for upload) */
 export function dataUrlToFile(dataUrl: string, fileName: string): File {
-  const arr = dataUrl.split(",");
-  const mime = arr[0]!.match(/:(.*?);/)![1]!;
-  const bstr = atob(arr[1]!);
+  const commaIndex = dataUrl.indexOf(",");
+  if (commaIndex === -1) {
+    throw new Error("Invalid data URL: missing comma separator");
+  }
+  const header = dataUrl.slice(0, commaIndex);
+  const base64 = dataUrl.slice(commaIndex + 1);
+  const mimeMatch = header.match(/:(.*?);/);
+  if (!mimeMatch || !mimeMatch[1]) {
+    throw new Error("Invalid data URL: cannot parse MIME type");
+  }
+  const mime = mimeMatch[1];
+  const bstr = atob(base64);
   const u8arr = new Uint8Array(bstr.length);
   for (let i = 0; i < bstr.length; i++) {
     u8arr[i] = bstr.charCodeAt(i);
