@@ -1,5 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { FadeIn } from "@/components/fade-in";
+import { GenerateOutfitSection } from "@/components/generate-outfit-section";
+import { WardrobeGallery } from "@/components/wardrobe-gallery";
 import { integrationStatus } from "@/lib/config";
 import { recentOutfits, userProfile, wardrobeItems } from "@/lib/fitmatch-data";
 import { buildOutfitOfTheDay, buildRecommendations } from "@/lib/style-engine";
@@ -152,6 +154,14 @@ export default function DashboardPage() {
           </div>
         </FadeIn>
       </section>
+
+      <FadeIn delay={0.1}>
+        <GenerateOutfitSection />
+      </FadeIn>
+
+      <FadeIn delay={0.12} className="rounded-[32px] border border-white/10 bg-white/5 p-8">
+        <WardrobeGallery items={wardrobeItems} />
+      </FadeIn>
     </AppShell>
   );
 }
