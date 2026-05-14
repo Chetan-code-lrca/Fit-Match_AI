@@ -1,0 +1,44 @@
+<svg width="1200" height="700" viewBox="0 0 1200 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="700" rx="42" fill="#09090B"/>
+  <rect x="34" y="34" width="1132" height="82" rx="24" fill="#111827"/>
+  <rect x="68" y="59" width="206" height="32" rx="16" fill="#F4F4F5"/>
+  <rect x="892" y="58" width="116" height="34" rx="17" fill="#27272A"/>
+  <rect x="1024" y="58" width="108" height="34" rx="17" fill="#F4F4F5"/>
+  <rect x="34" y="140" width="312" height="526" rx="30" fill="#111827"/>
+  <rect x="372" y="140" width="436" height="248" rx="30" fill="#111827"/>
+  <rect x="372" y="414" width="436" height="252" rx="30" fill="#111827"/>
+  <rect x="834" y="140" width="332" height="254" rx="30" fill="#111827"/>
+  <rect x="834" y="420" width="332" height="246" rx="30" fill="#111827"/>
+  <rect x="66" y="180" width="248" height="170" rx="24" fill="url(#paint0_linear_4_29)"/>
+  <rect x="66" y="380" width="248" height="118" rx="24" fill="#18181B"/>
+  <rect x="66" y="520" width="248" height="112" rx="24" fill="#18181B"/>
+  <rect x="404" y="174" width="372" height="42" rx="21" fill="#18181B"/>
+  <rect x="404" y="242" width="168" height="108" rx="24" fill="#18181B"/>
+  <rect x="588" y="242" width="188" height="108" rx="24" fill="#18181B"/>
+  <rect x="404" y="454" width="372" height="44" rx="22" fill="#18181B"/>
+  <rect x="404" y="526" width="172" height="108" rx="24" fill="#18181B"/>
+  <rect x="596" y="526" width="180" height="108" rx="24" fill="#18181B"/>
+  <rect x="866" y="174" width="268" height="72" rx="24" fill="#18181B"/>
+  <rect x="866" y="272" width="268" height="90" rx="24" fill="#18181B"/>
+  <rect x="866" y="454" width="268" height="84" rx="24" fill="#18181B"/>
+  <rect x="866" y="564" width="268" height="70" rx="24" fill="#18181B"/>
+  <circle cx="196" cy="265" r="64" fill="url(#paint1_radial_4_29)"/>
+  <text x="92" y="418" fill="#F4F4F5" font-family="Arial, Helvetica, sans-serif" font-size="28">Outfit of the day</text>
+  <text x="92" y="558" fill="#F4F4F5" font-family="Arial, Helvetica, sans-serif" font-size="28">Recent rotations</text>
+  <text x="404" y="205" fill="#F4F4F5" font-family="Arial, Helvetica, sans-serif" font-size="26">AI recommendation grid</text>
+  <text x="404" y="486" fill="#F4F4F5" font-family="Arial, Helvetica, sans-serif" font-size="26">Wardrobe categories</text>
+  <text x="866" y="212" fill="#F4F4F5" font-family="Arial, Helvetica, sans-serif" font-size="24">Upload activity</text>
+  <text x="866" y="489" fill="#F4F4F5" font-family="Arial, Helvetica, sans-serif" font-size="24">Integration readiness</text>
+  <defs>
+    <linearGradient id="paint0_linear_4_29" x1="66" y1="180" x2="314" y2="350" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F4F4F5"/>
+      <stop offset="0.5" stop-color="#71717A"/>
+      <stop offset="1" stop-color="#18181B"/>
+    </linearGradient>
+    <radialGradient id="paint1_radial_4_29" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(196 265) rotate(90) scale(64)">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.58" stop-color="#A855F7"/>
+      <stop offset="1" stop-color="#111827"/>
+    </radialGradient>
+  </defs>
+</svg>
