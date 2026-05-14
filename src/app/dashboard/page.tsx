@@ -112,16 +112,16 @@ export default function DashboardPage() {
                     {outfit.items.length} pieces
                   </span>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {outfit.items.map((itemId) => (
-                    <span
-                      key={itemId}
-                      className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-300"
-                    >
-                      {itemId.replaceAll("-", " ")}
-                    </span>
-                  ))}
-                </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {outfit.items.map((itemId) => (
+                  <span
+                    key={itemId}
+                    className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-300"
+                  >
+                    {wardrobeItems.find((item) => item.id === itemId)?.name ?? itemId}
+                  </span>
+                ))}
+              </div>
               </article>
             ))}
           </div>

@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { TopNav } from "@/components/top-nav";
 
 type AppShellProps = {
-  children: ReactNode;
+  children?: ReactNode;
   eyebrow?: string;
   title?: string;
   description?: string;

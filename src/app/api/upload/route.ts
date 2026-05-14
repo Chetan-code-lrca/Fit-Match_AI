@@ -4,18 +4,28 @@ import { uploadFormats } from "@/lib/fitmatch-data";
 
 function inferTags(fileName: string) {
   const normalized = fileName.toLowerCase();
+  const tokens = normalized.split(/[^a-z0-9]+/).filter(Boolean);
+  const hasToken = (token: string) => tokens.includes(token);
   const tags = [
-    normalized.includes("hoodie") ? "hoodie layer" : "mirror selfie",
-    normalized.includes("black") ? "black top" : "neutral palette",
-    normalized.includes("shoe") ? "white sneakers" : "smart casual ready",
+    hasToken("hoodie") ? "hoodie layer" : hasToken("jacket") ? "outer layer" : "uploaded outfit",
+    hasToken("black")
+      ? "black top"
+      : hasToken("white")
+        ? "white accent"
+        : "neutral palette",
+    hasToken("shoe") || hasToken("sneaker")
+      ? "sneaker styling"
+      : hasToken("travel")
+        ? "travel ready"
+        : "smart casual ready",
   ];
 
   return {
-    dominantColors: normalized.includes("black")
+    dominantColors: hasToken("black")
       ? ["black", "charcoal", "white"]
       : ["cream", "olive", "charcoal"],
     tags,
-    occasionHint: normalized.includes("travel") ? "Travel-ready" : "Campus + smart-casual",
+    occasionHint: hasToken("travel") ? "Travel-ready" : "Campus + smart-casual",
   };
 }
 

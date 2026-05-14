@@ -12,7 +12,20 @@ type SuggestionsPageProps = {
 export default async function SuggestionsPage({ searchParams }: SuggestionsPageProps) {
   const params = (await searchParams) ?? {};
   const selectedItemId = params.item ?? "black-hoodie";
-  const selectedItem = wardrobeItems.find((item) => item.id === selectedItemId) ?? wardrobeItems[0];
+  const fallbackItem = wardrobeItems[0];
+
+  if (!fallbackItem) {
+    return (
+      <AppShell
+        eyebrow="Smart outfit recommendation engine"
+        title="No wardrobe items available yet"
+        description="Upload items to start generating outfit recommendations."
+      />
+    );
+  }
+
+  const selectedItem =
+    wardrobeItems.find((item) => item.id === selectedItemId) ?? fallbackItem;
   const recommendations = buildRecommendations(selectedItem.id);
 
   return (

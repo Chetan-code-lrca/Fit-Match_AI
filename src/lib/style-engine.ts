@@ -141,7 +141,10 @@ export function buildRecommendations(
 }
 
 export function buildOutfitOfTheDay() {
-  const dayIndex = new Date().getDate() % wardrobeItems.length;
+  const dateKey = new Date().toISOString().slice(0, 10);
+  const dayIndex =
+    dateKey.split("").reduce((total, character) => total + character.charCodeAt(0), 0) %
+    wardrobeItems.length;
   const seedItem = wardrobeItems[dayIndex] ?? wardrobeItems[0];
   const recommendation = buildRecommendations(seedItem.id, "smart-casual")[0];
   const lastWornIds = recentOutfits.flatMap((outfit) => outfit.items);

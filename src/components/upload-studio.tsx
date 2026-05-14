@@ -1,7 +1,6 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 
 import { uploadFormats } from "@/lib/fitmatch-data";
 
@@ -17,21 +16,6 @@ export function UploadStudio() {
   const [analysis, setAnalysis] = useState<UploadAnalysis[]>([]);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
-
-  const previews = useMemo(
-    () =>
-      files.map((file) => ({
-        name: file.name,
-        url: URL.createObjectURL(file),
-      })),
-    [files],
-  );
-
-  useEffect(() => {
-    return () => {
-      previews.forEach((preview) => URL.revokeObjectURL(preview.url));
-    };
-  }, [previews]);
 
   async function handleAnalyze(selectedFiles: FileList | null) {
     if (!selectedFiles) {
@@ -97,7 +81,9 @@ export function UploadStudio() {
               accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
               multiple
               className="hidden"
-              onChange={(event) => void handleAnalyze(event.target.files)}
+              onChange={(event) => {
+                handleAnalyze(event.target.files);
+              }}
             />
           </label>
           {error ? (
@@ -131,15 +117,21 @@ export function UploadStudio() {
           ) : null}
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          {previews.map((preview) => (
-            <div key={preview.name} className="overflow-hidden rounded-[24px] border border-white/10">
-              <img
-                src={preview.url}
-                alt={preview.name}
-                className="h-48 w-full object-cover"
-              />
-              <div className="border-t border-white/10 bg-black/40 p-3 text-sm text-zinc-300">
-                {preview.name}
+          {files.map((file, index) => (
+            <div
+              key={`${file.name}-${index}`}
+              className="overflow-hidden rounded-[24px] border border-white/10 bg-black/30"
+            >
+              <div className="flex h-48 flex-col justify-between bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_transparent_50%),linear-gradient(160deg,_rgba(255,255,255,0.08),_rgba(255,255,255,0.02))] p-5">
+                <span className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.3em] text-zinc-300">
+                  wardrobe image
+                </span>
+                <div>
+                  <p className="text-lg font-semibold text-white">{file.name}</p>
+                  <p className="mt-2 text-sm text-zinc-400">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB • {file.type}
+                  </p>
+                </div>
               </div>
             </div>
           ))}

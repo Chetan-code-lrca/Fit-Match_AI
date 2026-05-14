@@ -13,10 +13,10 @@ const featureCards = [
 ];
 
 const requiredPages = [
-  { title: "Dashboard", href: "/dashboard", copy: "Daily outfit, wardrobe health, favorites, and recent history." },
-  { title: "Upload Wardrobe", href: "/upload", copy: "Mirror selfies, item shots, and analysis metadata in one flow." },
-  { title: "Outfit Suggestions", href: "/suggestions", copy: "Color-theory-backed combinations driven by what you already own." },
-  { title: "AI Stylist Chat", href: "/chat", copy: "Prompt for college, travel, monochrome, and sneaker-based fits." },
+  { title: "Dashboard", href: "/dashboard", description: "Daily outfit, wardrobe health, favorites, and recent history." },
+  { title: "Upload Wardrobe", href: "/upload", description: "Mirror selfies, item shots, and analysis metadata in one flow." },
+  { title: "Outfit Suggestions", href: "/suggestions", description: "Color-theory-backed combinations driven by what you already own." },
+  { title: "AI Stylist Chat", href: "/chat", description: "Prompt for college, travel, monochrome, and sneaker-based fits." },
 ];
 
 export default function Home() {
@@ -128,8 +128,8 @@ export default function Home() {
             >
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-2xl font-semibold">{page.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-zinc-400">{page.copy}</p>
+                   <h3 className="text-2xl font-semibold">{page.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-zinc-400">{page.description}</p>
                 </div>
                 <Link
                   href={page.href}
