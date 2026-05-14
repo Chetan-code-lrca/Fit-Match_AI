@@ -20,6 +20,13 @@ type UploadedFile = {
   extractedColors: string[];
 };
 
+const clothingTips = [
+  "Center the clothing item in frame for best color detection.",
+  "Plain backgrounds improve clothing segmentation accuracy.",
+  "Natural light gives the most accurate color extraction.",
+  "Upload one item per image for precise category tagging.",
+];
+
 export function UploadStudio() {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [analysis, setAnalysis] = useState<UploadAnalysis[]>([]);
@@ -104,19 +111,22 @@ export function UploadStudio() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+      {/* Upload dropzone */}
       <section className="rounded-[28px] border border-dashed border-white/20 bg-black/30 p-6">
         <div className="space-y-4">
           <span className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-[0.3em] text-zinc-400">
-            Cloud-ready uploads
+            Wardrobe ingestion
           </span>
-          <h2 className="text-2xl font-semibold">Upload mirror selfies or single items</h2>
+          <h2 className="text-2xl font-semibold">Upload your clothing items</h2>
           <p className="text-sm leading-6 text-zinc-400">
-            The demo validates image formats, previews your files, extracts dominant colors, and
-            simulates AI tags for occasion and outfit components.
+            Upload individual garment photos or mirror selfies. The AI extracts clothing colors
+            from the centre of each image, ignoring background walls and lighting — only the center 65% of each image is sampled.
           </p>
+
           <label className="flex cursor-pointer flex-col items-center justify-center rounded-[24px] border border-white/10 bg-white/5 px-6 py-12 text-center transition hover:border-white/30 hover:bg-white/10">
-            <span className="text-lg font-semibold">Drop files or browse</span>
-            <span className="mt-2 text-sm text-zinc-400">Supports JPG, PNG, WEBP</span>
+            <span className="text-4xl">👗</span>
+            <span className="mt-3 text-lg font-semibold">Drop files or browse</span>
+            <span className="mt-1 text-sm text-zinc-400">Supports JPG, PNG, WEBP</span>
             <input
               type="file"
               accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
@@ -127,28 +137,35 @@ export function UploadStudio() {
               }}
             />
           </label>
+
           {error ? (
             <p className="rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
               {error}
             </p>
           ) : null}
-          <div className="grid gap-3 text-sm text-zinc-300">
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-              Auto-detects dominant colors, layering, occasion cues, and accessories.
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-              Ready to connect to Cloudinary or Firebase Storage via environment variables.
-            </div>
+
+          {/* Tips */}
+          <div className="grid gap-2 pt-2">
+            {clothingTips.map((tip) => (
+              <div
+                key={tip}
+                className="flex items-start gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs leading-5 text-zinc-400"
+              >
+                <span className="mt-0.5 text-zinc-600">•</span>
+                {tip}
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
+      {/* Analysis panel */}
       <section className="space-y-4 rounded-[28px] border border-white/10 bg-white/5 p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-semibold">AI wardrobe analysis</h2>
-            <p className="mt-2 text-sm text-zinc-400">
-              Review previews, extracted colors, and upload-ready metadata.
+            <p className="mt-1 text-sm text-zinc-400">
+              Clothing colors sampled from the center 65% of the image — background walls excluded.
             </p>
           </div>
           {isLoading ? (
@@ -171,6 +188,7 @@ export function UploadStudio() {
           ) : null}
         </div>
 
+        {/* Image previews */}
         {uploadedFiles.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2">
             {uploadedFiles.map((entry, index) => (
@@ -187,21 +205,29 @@ export function UploadStudio() {
                     sizes="(max-width: 640px) 100vw, 50vw"
                     unoptimized
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-4">
                     <p className="truncate text-sm font-semibold text-white">{entry.file.name}</p>
                     <p className="mt-1 text-xs text-zinc-300">
                       {(entry.file.size / 1024 / 1024).toFixed(2)} MB · {entry.file.type}
                     </p>
                   </div>
+                  {/* Scanning indicator overlay */}
+                  {extractingColors ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <div className="rounded-2xl border border-white/20 bg-black/60 px-4 py-2 text-xs text-white">
+                        Scanning clothing area…
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
                 {entry.extractedColors.length > 0 ? (
                   <div className="flex items-center gap-2 px-4 py-3">
-                    <span className="text-xs text-zinc-500">Colors:</span>
+                    <span className="text-xs text-zinc-500">Clothing colors:</span>
                     {entry.extractedColors.map((hex) => (
                       <span
                         key={hex}
-                        className="h-4 w-4 rounded-full border border-white/20"
+                        className="h-5 w-5 rounded-full border border-white/20 shadow"
                         style={{ backgroundColor: hex }}
                         title={hex}
                       />
@@ -213,6 +239,7 @@ export function UploadStudio() {
           </div>
         ) : null}
 
+        {/* Analysis results */}
         <div className="grid gap-4">
           {analysis.map((entry) => (
             <article
@@ -220,7 +247,7 @@ export function UploadStudio() {
               className="rounded-3xl border border-white/10 bg-black/30 p-4"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="font-semibold">{entry.fileName}</h3>
+                <h3 className="font-semibold text-sm">{entry.fileName}</h3>
                 <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-300">
                   {entry.occasionHint}
                 </span>
@@ -261,9 +288,14 @@ export function UploadStudio() {
               </div>
             </article>
           ))}
+
           {!analysis.length && !isLoading && uploadedFiles.length === 0 ? (
-            <div className="rounded-3xl border border-white/10 bg-black/20 p-6 text-sm text-zinc-400">
-              Your AI analysis cards will appear here after you upload an outfit photo.
+            <div className="rounded-3xl border border-white/10 bg-black/20 p-6 text-center">
+              <p className="text-4xl">📸</p>
+              <p className="mt-3 text-sm text-zinc-400">
+                Upload a clothing photo to see AI analysis — extracted colors, occasion tags, and
+                wardrobe metadata will appear here.
+              </p>
             </div>
           ) : null}
         </div>

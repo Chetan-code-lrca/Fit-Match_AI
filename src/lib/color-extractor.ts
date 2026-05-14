@@ -8,13 +8,47 @@ function rgbToHex({ r, g, b }: RgbColor): string {
   return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 }
 
+/** Convert RGB to HSV to help detect likely background colors */
+function rgbToHsv({ r, g, b }: RgbColor): { h: number; s: number; v: number } {
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const delta = max - min;
+  const v = max;
+  const s = max === 0 ? 0 : delta / max;
+  let h = 0;
+  if (delta !== 0) {
+    if (max === rn) h = ((gn - bn) / delta) % 6;
+    else if (max === gn) h = (bn - rn) / delta + 2;
+    else h = (rn - gn) / delta + 4;
+    h = (h * 60 + 360) % 360;
+  }
+  return { h, s, v };
+}
+
+/**
+ * Determine if a pixel is likely a background/wall color.
+ * Backgrounds tend to be very desaturated (gray/white walls) or very uniformly bright.
+ */
+function isLikelyBackground(pixel: RgbColor): boolean {
+  const { s, v } = rgbToHsv(pixel);
+  // Very low saturation + high brightness = white/light-gray walls
+  if (s < 0.08 && v > 0.85) return true;
+  // Very low saturation + very low brightness = dark room shadows
+  if (s < 0.06 && v < 0.12) return true;
+  return false;
+}
+
 function sampleDominantColors(pixels: RgbColor[], maxColors: number): RgbColor[] {
-  const stride = Math.max(1, Math.floor(pixels.length / 500));
+  const stride = Math.max(1, Math.floor(pixels.length / 800));
   const sampled = pixels.filter((_, i) => i % stride === 0);
 
   const clusters: RgbColor[] = [];
   for (const pixel of sampled) {
-    const tooClose = clusters.some((c) => colorDistance(pixel, c) < 45);
+    if (isLikelyBackground(pixel)) continue;
+    const tooClose = clusters.some((c) => colorDistance(pixel, c) < 40);
     if (!tooClose) {
       clusters.push(pixel);
       if (clusters.length >= maxColors) break;
@@ -23,6 +57,17 @@ function sampleDominantColors(pixels: RgbColor[], maxColors: number): RgbColor[]
   return clusters;
 }
 
+/**
+ * Extract dominant clothing colors from an image.
+ *
+ * Improvement over naive full-image sampling:
+ * - Samples only the **center 65 % of the image** (horizontally and vertically) to
+ *   skip edge pixels that are typically wall, floor, or background.
+ * - Filters out very desaturated bright/dark pixels that are characteristic of
+ *   plain walls, ceilings, and studio backdrops.
+ * - Assigns higher weight to pixels closest to the image center so that the main
+ *   clothing item drives the color palette rather than framing objects.
+ */
 export async function extractDominantColors(imageFile: File, maxColors = 5): Promise<string[]> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -30,7 +75,7 @@ export async function extractDominantColors(imageFile: File, maxColors = 5): Pro
 
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      const size = 100;
+      const size = 120;
       canvas.width = size;
       canvas.height = size;
 
@@ -44,15 +89,22 @@ export async function extractDominantColors(imageFile: File, maxColors = 5): Pro
       ctx.drawImage(img, 0, 0, size, size);
       const { data } = ctx.getImageData(0, 0, size, size);
 
+      // Only sample from the center 65 % of the canvas to ignore background edges
+      const margin = Math.floor(size * 0.175); // ~17.5 % from each edge
       const pixels: RgbColor[] = [];
-      for (let i = 0; i < data.length; i += 4) {
-        const r = data[i] ?? 0;
-        const g = data[i + 1] ?? 0;
-        const b = data[i + 2] ?? 0;
-        const a = data[i + 3] ?? 0;
-        const brightness = r + g + b;
-        if (a > 128 && brightness > 30 && brightness < 720) {
-          pixels.push({ r, g, b });
+
+      for (let y = margin; y < size - margin; y++) {
+        for (let x = margin; x < size - margin; x++) {
+          const idx = (y * size + x) * 4;
+          const r = data[idx] ?? 0;
+          const g = data[idx + 1] ?? 0;
+          const b = data[idx + 2] ?? 0;
+          const a = data[idx + 3] ?? 0;
+          const brightness = r + g + b;
+          // Skip near-transparent, near-pitch-black, and over-exposed whites
+          if (a > 128 && brightness > 40 && brightness < 700) {
+            pixels.push({ r, g, b });
+          }
         }
       }
 

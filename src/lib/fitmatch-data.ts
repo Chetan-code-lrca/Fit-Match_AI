@@ -16,13 +16,22 @@ export type WardrobeItem = {
   id: string;
   name: string;
   category: WardrobeCategory;
+  /** Primary color name (e.g. "black", "olive", "cream") */
   color: string;
   palette: "neutral" | "earth" | "cool" | "warm" | "monochrome";
   occasion: WardrobeOccasion[];
   season: Array<"spring" | "summer" | "autumn" | "winter">;
   tags: string[];
+  /** Original uploaded image URL */
   imageUrl?: string;
+  /** URL of the background-removed / cropped clothing item image */
+  extractedItemImage?: string;
+  /** Style type e.g. "minimal", "streetwear", "smart", "utility" */
   style?: string;
+  /** Fabric or texture e.g. "cotton", "denim", "knit", "fleece" */
+  fabric?: string;
+  /** Visual pattern e.g. "solid", "striped", "graphic", "plaid" */
+  pattern?: "solid" | "striped" | "graphic" | "plaid" | "checkered" | "floral";
 };
 
 export type OutfitRecommendation = {
@@ -47,6 +56,9 @@ export const wardrobeItems: WardrobeItem[] = [
     occasion: ["campus", "travel", "streetwear", "night-out"],
     season: ["autumn", "winter", "spring"],
     tags: ["black hoodie", "streetwear layer", "soft fleece"],
+    style: "streetwear",
+    fabric: "fleece",
+    pattern: "solid",
   },
   {
     id: "cream-tee",
@@ -57,6 +69,9 @@ export const wardrobeItems: WardrobeItem[] = [
     occasion: ["campus", "travel", "smart-casual"],
     season: ["spring", "summer", "autumn"],
     tags: ["cream shirt", "neutral basic", "lightweight"],
+    style: "minimal",
+    fabric: "cotton",
+    pattern: "solid",
   },
   {
     id: "olive-overshirt",
@@ -67,6 +82,9 @@ export const wardrobeItems: WardrobeItem[] = [
     occasion: ["campus", "travel", "smart-casual"],
     season: ["spring", "autumn", "winter"],
     tags: ["olive layer", "earth-tone jacket", "utility"],
+    style: "utility",
+    fabric: "cotton",
+    pattern: "solid",
   },
   {
     id: "navy-knit",
@@ -77,6 +95,9 @@ export const wardrobeItems: WardrobeItem[] = [
     occasion: ["smart-casual", "night-out", "travel"],
     season: ["autumn", "winter", "spring"],
     tags: ["navy top", "texture knit", "elevated"],
+    style: "smart",
+    fabric: "knit",
+    pattern: "solid",
   },
   {
     id: "beige-cargo",
@@ -87,6 +108,9 @@ export const wardrobeItems: WardrobeItem[] = [
     occasion: ["campus", "travel", "streetwear"],
     season: ["spring", "summer", "autumn"],
     tags: ["beige cargo", "relaxed fit", "utility"],
+    style: "utility",
+    fabric: "cotton",
+    pattern: "solid",
   },
   {
     id: "charcoal-trouser",
@@ -97,6 +121,9 @@ export const wardrobeItems: WardrobeItem[] = [
     occasion: ["smart-casual", "night-out", "travel"],
     season: ["autumn", "winter", "spring"],
     tags: ["charcoal trouser", "refined", "sleek"],
+    style: "smart",
+    fabric: "wool-blend",
+    pattern: "solid",
   },
   {
     id: "black-denim",
@@ -107,6 +134,9 @@ export const wardrobeItems: WardrobeItem[] = [
     occasion: ["campus", "streetwear", "night-out"],
     season: ["spring", "autumn", "winter"],
     tags: ["black denim", "tapered", "versatile"],
+    style: "minimal",
+    fabric: "denim",
+    pattern: "solid",
   },
   {
     id: "white-sneakers",
@@ -117,6 +147,9 @@ export const wardrobeItems: WardrobeItem[] = [
     occasion: ["campus", "travel", "smart-casual", "streetwear"],
     season: ["spring", "summer", "autumn"],
     tags: ["white sneakers", "clean leather", "everyday"],
+    style: "minimal",
+    fabric: "leather",
+    pattern: "solid",
   },
   {
     id: "black-boots",
@@ -127,6 +160,9 @@ export const wardrobeItems: WardrobeItem[] = [
     occasion: ["smart-casual", "night-out", "travel"],
     season: ["autumn", "winter", "spring"],
     tags: ["black boots", "sleek", "elevated"],
+    style: "smart",
+    fabric: "leather",
+    pattern: "solid",
   },
   {
     id: "silver-watch",
@@ -137,6 +173,8 @@ export const wardrobeItems: WardrobeItem[] = [
     occasion: ["smart-casual", "night-out", "travel", "campus"],
     season: ["spring", "summer", "autumn", "winter"],
     tags: ["watch", "accessory", "polished"],
+    style: "minimal",
+    pattern: "solid",
   },
 ];
 
@@ -183,4 +221,8 @@ export const promptSuggestions = [
   "Suggest an outfit for night travel",
   "I want an all-black fit",
   "Suggest combinations with white sneakers",
+  "Airport casual fit",
+  "Smart casual for a date",
+  "Monochrome streetwear look",
+  "Minimal weekend outfit",
 ];

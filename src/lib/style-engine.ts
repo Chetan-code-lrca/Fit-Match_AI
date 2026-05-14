@@ -204,15 +204,20 @@ export function generateOutfits(baseItemId?: string, count = 4): GeneratedOutfit
 export function buildChatReply(prompt: string) {
   const normalizedPrompt = prompt.toLowerCase();
 
-  if (normalizedPrompt.includes("white sneakers")) {
+  if (normalizedPrompt.includes("white sneakers") || normalizedPrompt.includes("white shoes")) {
     return {
       message:
-        "White sneakers work best when the rest of the outfit stays clean and contrast-driven. I’d balance them with grounded neutrals from your closet.",
+        "White sneakers work best when the rest of the outfit stays clean and contrast-driven. Balance them with grounded neutrals from your closet.",
       recommendations: buildRecommendations("white-sneakers", "campus"),
     };
   }
 
-  if (normalizedPrompt.includes("black") || normalizedPrompt.includes("hoodie")) {
+  if (
+    normalizedPrompt.includes("all-black") ||
+    normalizedPrompt.includes("all black") ||
+    normalizedPrompt.includes("monochrome") ||
+    (normalizedPrompt.includes("black") && normalizedPrompt.includes("hoodie"))
+  ) {
     return {
       message:
         "Your black hoodie is the best anchor for a monochrome streetwear look. I paired it with structured bottoms so the fit stays intentional, not flat.",
@@ -220,19 +225,77 @@ export function buildChatReply(prompt: string) {
     };
   }
 
-  if (normalizedPrompt.includes("college")) {
+  if (
+    normalizedPrompt.includes("college") ||
+    normalizedPrompt.includes("campus") ||
+    normalizedPrompt.includes("class") ||
+    normalizedPrompt.includes("university")
+  ) {
     return {
       message:
-        "For college, I’d keep the outfit comfortable, low-maintenance, and photo-ready between classes. Neutral layers and sneakers give you that easy premium feel.",
+        "For college, keep the outfit comfortable, low-maintenance, and photo-ready between classes. Neutral layers and sneakers give you that easy premium feel.",
       recommendations: buildRecommendations("cream-tee", "campus"),
     };
   }
 
-  if (normalizedPrompt.includes("travel")) {
+  if (
+    normalizedPrompt.includes("travel") ||
+    normalizedPrompt.includes("airport") ||
+    normalizedPrompt.includes("flight") ||
+    normalizedPrompt.includes("trip")
+  ) {
     return {
       message:
-        "Night travel looks best with darker anchors, a practical layer, and footwear that can handle long movement. I leaned into a calm, elevated palette.",
+        "Travel and airport fits look best with darker anchors, a practical layer, and footwear that can handle long movement. I leaned into a calm, elevated palette.",
       recommendations: buildRecommendations("navy-knit", "travel"),
+    };
+  }
+
+  if (
+    normalizedPrompt.includes("date") ||
+    normalizedPrompt.includes("night out") ||
+    normalizedPrompt.includes("night-out") ||
+    normalizedPrompt.includes("dinner") ||
+    normalizedPrompt.includes("evening")
+  ) {
+    return {
+      message:
+        "For a night out, go with sharper contrast — dark bottoms, a refined top, and boots to elevate the silhouette. Confidence is the best accessory.",
+      recommendations: buildRecommendations("navy-knit", "night-out"),
+    };
+  }
+
+  if (
+    normalizedPrompt.includes("smart casual") ||
+    normalizedPrompt.includes("smart-casual") ||
+    normalizedPrompt.includes("minimal") ||
+    normalizedPrompt.includes("clean")
+  ) {
+    return {
+      message:
+        "Smart casual lives in the balance between polished and relaxed. Structured pieces in neutral tones with clean footwear is the move.",
+      recommendations: buildRecommendations("charcoal-trouser", "smart-casual"),
+    };
+  }
+
+  if (
+    normalizedPrompt.includes("streetwear") ||
+    normalizedPrompt.includes("street") ||
+    normalizedPrompt.includes("hype") ||
+    normalizedPrompt.includes("casual")
+  ) {
+    return {
+      message:
+        "Streetwear is all about intentional layering and tonal contrast. I built this fit around your strongest statement pieces.",
+      recommendations: buildRecommendations("black-hoodie", "streetwear"),
+    };
+  }
+
+  if (normalizedPrompt.includes("olive") || normalizedPrompt.includes("earth")) {
+    return {
+      message:
+        "Earth tones are having a major moment. Your olive overshirt is the anchor — pair it with neutrals and clean footwear for a grounded, editorial look.",
+      recommendations: buildRecommendations("olive-overshirt", "smart-casual"),
     };
   }
 
