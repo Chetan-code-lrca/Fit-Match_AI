@@ -79,11 +79,11 @@ const namedColors: Array<{ hex: string; name: string; rgb: RgbColor }> = [
   { hex: "#36454F", name: "Charcoal", rgb: { r: 54, g: 69, b: 79 } },
   { hex: "#FAFAFA", name: "White", rgb: { r: 250, g: 250, b: 250 } },
   { hex: "#B0B4BD", name: "Silver", rgb: { r: 176, g: 180, b: 189 } },
-  { hex: "#8B4513", name: "Brown", rgb: { r: 139, g: 69, b: 19 } },
+  { hex: "#8B6347", name: "Brown", rgb: { r: 139, g: 99, b: 71 } },
   { hex: "#C0392B", name: "Red", rgb: { r: 192, g: 57, b: 43 } },
   { hex: "#2980B9", name: "Blue", rgb: { r: 41, g: 128, b: 185 } },
   { hex: "#27AE60", name: "Green", rgb: { r: 39, g: 174, b: 96 } },
-  { hex: "#F39C12", name: "Tan", rgb: { r: 243, g: 156, b: 18 } },
+  { hex: "#D2A679", name: "Tan", rgb: { r: 210, g: 166, b: 121 } },
   { hex: "#6C3483", name: "Purple", rgb: { r: 108, g: 52, b: 131 } },
   { hex: "#E8E8E0", name: "Off-white", rgb: { r: 232, g: 232, b: 224 } },
 ];

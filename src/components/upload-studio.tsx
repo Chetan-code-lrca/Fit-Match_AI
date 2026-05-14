@@ -35,7 +35,7 @@ export function UploadStudio() {
   }
 
   async function handleAnalyze(selectedFiles: FileList | null) {
-    if (!selectedFiles || selectedFiles.length === 0) return;
+    if (!selectedFiles) return;
 
     const nextFiles = Array.from(selectedFiles);
     const invalid = nextFiles.find((file) => !uploadFormats.includes(file.type));

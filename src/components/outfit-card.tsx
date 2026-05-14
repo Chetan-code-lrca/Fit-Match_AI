@@ -31,7 +31,7 @@ export function ItemThumbnail({ item, size = "md" }: ItemThumbnailProps) {
 
   return (
     <div
-      className={`${dim} flex-shrink-0 rounded-2xl border border-white/10 flex flex-col items-center justify-center gap-1`}
+      className={`${dim} flex flex-shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border border-white/10`}
       style={{ backgroundColor: hex }}
       title={item.name}
     >

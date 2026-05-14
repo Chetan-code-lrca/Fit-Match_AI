@@ -86,10 +86,10 @@ export async function POST(request: Request) {
 
     // Temporarily merge custom items with static wardrobe for scoring purposes
     const augmented = [...wardrobeItems, ...body.items];
-    const tops = augmented.filter(
-      (i) => i.category === "top" || i.category === "layer",
-    );
-    const baseItems = tops.slice(0, count);
+    // Include tops and layers as base items for outfit generation
+    const baseItems = augmented
+      .filter((i) => i.category === "top" || i.category === "layer")
+      .slice(0, count);
 
     const customOutfits = baseItems.map((base) => {
       const rec = buildRecommendations(base.id, "smart-casual")[0] ?? {
