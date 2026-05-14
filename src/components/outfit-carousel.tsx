@@ -52,8 +52,8 @@ export function OutfitCarousel({ outfits }: OutfitCarouselProps) {
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex gap-4 overflow-x-auto pb-2"
-        style={{ scrollSnapType: "x mandatory", scrollbarWidth: "none", msOverflowStyle: "none" }}
+        className="scrollbar-none flex gap-4 overflow-x-auto pb-2"
+        style={{ scrollSnapType: "x mandatory" }}
       >
         {outfits.map((outfit) => (
           <div
