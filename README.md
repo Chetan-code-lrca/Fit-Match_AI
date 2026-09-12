@@ -126,7 +126,3 @@ The login page is currently a frontend/prototype experience; environment-variabl
 ## Limitations
 
 This is an evolving prototype. Recommendation quality is based on hand-written heuristics and the included wardrobe data rather than a trained fashion model. External services are optional and may require their own accounts, quotas, and configuration.
-
-## License
-
-Add or retain the repository's chosen license here before distributing the project.
