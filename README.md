@@ -1,70 +1,49 @@
 # FitMatch AI
 
-FitMatch AI is a Next.js prototype for generating wardrobe-based outfit recommendations and lightweight styling guidance.
+FitMatch AI is a Next.js prototype for wardrobe-based outfit recommendations and styling guidance.
 
-The application combines a local rule-based styling engine with an optional OpenAI integration for improving the wording of generated outfit explanations.
+The application combines a local rule-based styling engine with optional OpenAI assistance for generating short explanations for outfit suggestions.
 
 ## What it includes
 
-- Responsive wardrobe dashboard
-- Wardrobe item browsing and selection
-- Outfit recommendations based on color palette and wardrobe categories
-- Occasion-aware recommendations for campus, travel, smart-casual, streetwear, and night-out use cases
-- Outfit-of-the-day generation
+- Wardrobe dashboard and item selection
+- Outfit suggestions for campus, travel, smart-casual, streetwear, and night-out use
+- Outfit scoring based on color harmony, aesthetics, and occasion fit
+- Outfit of the Day generation
 - Rule-based stylist chat
-- Optional OpenAI-powered explanation enrichment
-- Upload-oriented wardrobe UI
+- Optional OpenAI explanation enrichment
+- Wardrobe upload UI
 
 ## How recommendations work
 
-The core recommendation engine is deterministic rather than a trained machine-learning model. It scores combinations using factors such as:
+The core recommendation engine is deterministic. It ranks wardrobe combinations using color similarity, palette compatibility, item category, favorite-color preferences, occasion compatibility, and scoring rules in `src/lib/style-engine.ts`.
 
-- color similarity and palette compatibility
-- item category
-- favorite-color boosts from the local sample profile
-- occasion compatibility
-- aesthetic and color-harmony scores
+It is not a trained fashion model.
 
-The resulting recommendations are sorted by a confidence-style score.
+## OpenAI integration
 
-## AI integration
+OpenAI is optional. When `OPENAI_API_KEY` is configured, the outfit-generation route uses the API to improve the wording of the generated styling explanations. The local recommendation engine works without an OpenAI key.
 
-OpenAI is optional. When `OPENAI_API_KEY` is available, the outfit-generation route sends generated outfit combinations to OpenAI to produce short styling explanations.
-
-The core recommendation system continues to work without the key.
-
-> Note: this repository should not be presented as an end-to-end production authentication or personalization platform. Several flows are currently prototype-level UI and local/static data.
+The login flow and several personalization/storage pieces are still prototype-level and use local/static data.
 
 ## Tech stack
 
-- **Framework:** Next.js App Router
-- **UI:** React, Tailwind CSS
-- **Animation:** Framer Motion
-- **Language:** TypeScript
-- **Optional AI:** OpenAI API
+- Next.js App Router
+- React
+- TypeScript
+- Tailwind CSS
+- Framer Motion
+- Next.js Route Handlers
+- Optional OpenAI API
 
-## Getting started
+## Run locally
 
-### Requirements
-
-- Node.js
-- npm
-
-### Install
+Requirements: Node.js and npm.
 
 ```bash
+git clone https://github.com/Chetan-code-lrca/Fit-Match_AI.git
+cd Fit-Match_AI
 npm install
-```
-
-Copy the example environment file:
-
-```bash
-cp .env.example .env.local
-```
-
-Start the development server:
-
-```bash
 npm run dev
 ```
 
@@ -72,7 +51,13 @@ Open `http://localhost:3000`.
 
 ## Environment variables
 
-The repository includes `.env.example` with placeholders for optional integrations:
+Copy `.env.example` to `.env.local`:
+
+```bash
+cp .env.example .env.local
+```
+
+The available variables are for optional authentication, OpenAI, weather, and image-storage integrations:
 
 ```text
 AUTH_SECRET=
@@ -85,7 +70,7 @@ CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 ```
 
-Never commit real secrets to `.env.example`, source files, screenshots, or documentation.
+Leave unused integrations empty. Never commit real credentials.
 
 ## Project structure
 
@@ -108,21 +93,17 @@ src/
     └── style-engine.ts
 ```
 
-## Validation
-
-Use the project scripts before pushing changes:
+## Build and lint
 
 ```bash
 npm run lint
 npm run build
 ```
 
-## Privacy and public-repository hygiene
+## Public data and uploads
 
-The public repository contains sample wardrobe data and UI code. Do not commit real wardrobe photos, private profile data, credentials, local filesystem paths, private deployment URLs, or other personal information.
-
-The login page is currently a frontend/prototype experience; environment-variable readiness does not by itself mean that authentication is fully implemented.
+The repository contains sample wardrobe data. Local uploaded files are part of the prototype storage flow; do not use real private wardrobe photos or personal profile data in a public deployment without adding appropriate storage and access controls.
 
 ## Limitations
 
-This is an evolving prototype. Recommendation quality is based on hand-written heuristics and the included wardrobe data rather than a trained fashion model. External services are optional and may require their own accounts, quotas, and configuration.
+Recommendation quality comes from hand-written styling rules and the sample wardrobe data. External services depend on their own configuration and availability.
