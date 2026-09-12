@@ -1,61 +1,81 @@
 # FitMatch AI
 
-FitMatch AI is a premium, mobile-friendly wardrobe assistant built with **Next.js**, **React**, **Tailwind CSS**, and **Framer Motion**. It turns uploaded outfit photos into a personal styling experience with wardrobe tagging, outfit scoring, AI chat prompts, and an Outfit of the Day generator.
+FitMatch AI is a Next.js prototype for generating wardrobe-based outfit recommendations and lightweight styling guidance.
 
-## Included MVP
+The application combines a local rule-based styling engine with an optional OpenAI integration for improving the wording of generated outfit explanations.
 
-- Landing page
-- Login/Register experience
-- Dashboard
-- Upload Wardrobe
-- Outfit Suggestions
-- AI Stylist Chat
-- Profile Settings
-- API routes for recommendations, chat, uploads, and outfit-of-the-day
+## What it includes
 
-## Product highlights
+- Responsive wardrobe dashboard
+- Wardrobe item browsing and selection
+- Outfit recommendations based on color palette and wardrobe categories
+- Occasion-aware recommendations for campus, travel, smart-casual, streetwear, and night-out use cases
+- Outfit-of-the-day generation
+- Rule-based stylist chat
+- Optional OpenAI-powered explanation enrichment
+- Upload-oriented wardrobe UI
 
-- **Personal AI stylist feel** with wardrobe-aware recommendation cards
-- **Color theory logic** for monochrome, neutral balancing, and complementary styling
-- **Outfit scoring** across aesthetics, color harmony, occasion fit, and confidence
-- **Upload-ready flow** for JPG, PNG, and WEBP wardrobe photos
-- **Responsive dark UI** with smooth motion and card-based layout
-- **Future-ready architecture** for weather, calendar planning, voice, travel packing, and shopping integrations
+## How recommendations work
+
+The core recommendation engine is deterministic rather than a trained machine-learning model. It scores combinations using factors such as:
+
+- color similarity and palette compatibility
+- item category
+- favorite-color boosts from the local sample profile
+- occasion compatibility
+- aesthetic and color-harmony scores
+
+The resulting recommendations are sorted by a confidence-style score.
+
+## AI integration
+
+OpenAI is optional. When `OPENAI_API_KEY` is available, the outfit-generation route sends generated outfit combinations to OpenAI to produce short styling explanations.
+
+The core recommendation system continues to work without the key.
+
+> Note: this repository should not be presented as an end-to-end production authentication or personalization platform. Several flows are currently prototype-level UI and local/static data.
 
 ## Tech stack
 
-- **Frontend:** Next.js App Router, React, Tailwind CSS, Framer Motion
-- **Backend:** Next.js Route Handlers
-- **AI-ready services:** OpenAI, Cloudinary/Firebase Storage, Google auth via environment variables
+- **Framework:** Next.js App Router
+- **UI:** React, Tailwind CSS
+- **Animation:** Framer Motion
+- **Language:** TypeScript
+- **Optional AI:** OpenAI API
 
 ## Getting started
 
-1. Install dependencies:
+### Requirements
+
+- Node.js
+- npm
+
+### Install
 
 ```bash
 npm install
 ```
 
-2. Create a local environment file:
+Copy the example environment file:
 
 ```bash
 cp .env.example .env.local
 ```
 
-3. Run the development server:
+Start the development server:
 
 ```bash
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000)
+Open `http://localhost:3000`.
 
 ## Environment variables
 
-Create `.env.local` with the values you plan to use in production:
+The repository includes `.env.example` with placeholders for optional integrations:
 
-```bash
-AUTH_SECRET=replace-with-a-long-random-string
+```text
+AUTH_SECRET=
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 OPENAI_API_KEY=
@@ -65,45 +85,48 @@ CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 ```
 
-The UI shows integration readiness automatically when these values are missing or configured.
+Never commit real secrets to `.env.example`, source files, screenshots, or documentation.
 
 ## Project structure
 
 ```text
 src/
-  app/
-    api/
-    chat/
-    dashboard/
-    login/
-    settings/
-    suggestions/
-    upload/
-  components/
-  lib/
-public/
+├── app/
+│   ├── api/
+│   │   ├── chat/
+│   │   └── generate-outfits/
+│   ├── chat/
+│   ├── dashboard/
+│   ├── login/
+│   ├── settings/
+│   ├── suggestions/
+│   └── upload/
+├── components/
+└── lib/
+    ├── config.ts
+    ├── fitmatch-data.ts
+    └── style-engine.ts
 ```
-
-## Deployment
-
-### Vercel
-
-- Import the repository into Vercel
-- Set the environment variables listed above
-- Deploy the Next.js application
-
-### Render or Railway
-
-- Use `npm install && npm run build`
-- Start with `npm run start`
-- Configure the same environment variables as Vercel
 
 ## Validation
 
-Use the existing scripts:
+Use the project scripts before pushing changes:
 
 ```bash
 npm run lint
 npm run build
 ```
 
+## Privacy and public-repository hygiene
+
+The public repository contains sample wardrobe data and UI code. Do not commit real wardrobe photos, private profile data, credentials, local filesystem paths, private deployment URLs, or other personal information.
+
+The login page is currently a frontend/prototype experience; environment-variable readiness does not by itself mean that authentication is fully implemented.
+
+## Limitations
+
+This is an evolving prototype. Recommendation quality is based on hand-written heuristics and the included wardrobe data rather than a trained fashion model. External services are optional and may require their own accounts, quotas, and configuration.
+
+## License
+
+Add or retain the repository's chosen license here before distributing the project.
