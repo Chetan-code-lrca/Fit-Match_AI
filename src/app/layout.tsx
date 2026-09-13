@@ -7,7 +7,8 @@ export const metadata: Metadata = {
     default: "FitMatch AI",
     template: "%s | FitMatch AI",
   },
-  description: "AI-powered wardrobe management, outfit analysis, and stylist recommendations.",
+  description:
+    "Wardrobe-based outfit recommendations, visual clothing uploads, and a rule-based stylist chat.",
 };
 
 export default function RootLayout({
