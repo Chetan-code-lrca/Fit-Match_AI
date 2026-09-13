@@ -27,6 +27,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Keep the production checks explicit so a green run proves the main app builds.
       - name: Lint
         run: npm run lint
 
