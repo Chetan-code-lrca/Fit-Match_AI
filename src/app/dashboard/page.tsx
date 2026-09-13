@@ -33,7 +33,6 @@ export default function DashboardPage() {
       title={`Good morning, ${userProfile.name} 👋`}
       description="Your wardrobe intelligence dashboard — daily outfit, style insights, and AI-powered suggestions tailored to your closet."
     >
-      {/* Quick action shortcuts */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {quickActions.map((action, index) => (
           <FadeIn key={action.href} delay={index * 0.05}>
@@ -48,9 +47,7 @@ export default function DashboardPage() {
         ))}
       </section>
 
-      {/* Outfit of the day + Style insights */}
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        {/* Outfit of the Day */}
         <FadeIn className="rounded-[32px] border border-white/10 bg-white/5 p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -65,10 +62,9 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          {/* Visual item thumbnails for outfit of the day */}
           <div className="mt-6 flex flex-wrap gap-4">
-            {outfitOfTheDay.items.map((item) => (
-              <div key={item.id} className="flex flex-col items-center gap-1.5">
+            {outfitOfTheDay.items.map((item, index) => (
+              <div key={`${item.category}-${item.id}-${index}`} className="flex flex-col items-center gap-1.5">
                 <ItemThumbnail item={item} size="lg" />
                 <span className="max-w-[90px] truncate text-center text-[10px] text-zinc-400">
                   {item.name.split(" ").slice(0, 2).join(" ")}
@@ -93,8 +89,7 @@ export default function DashboardPage() {
           </div>
         </FadeIn>
 
-        {/* Style insights */}
-        <div className="grid grid-cols-2 gap-3 content-start">
+        <div className="grid grid-cols-2 content-start gap-3">
           {styleInsights.map((stat, index) => (
             <FadeIn
               key={stat.label}
@@ -126,7 +121,6 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Recent outfit timeline + top picks */}
       <section className="grid gap-6 lg:grid-cols-2">
         <FadeIn className="rounded-[32px] border border-white/10 bg-white/5 p-8">
           <p className="text-xs uppercase tracking-[0.35em] text-zinc-500">Outfit history</p>
@@ -147,13 +141,13 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {outfit.items.map((itemId) => {
+                  {outfit.items.map((itemId, itemIndex) => {
                     const item = wardrobeItems.find((w) => w.id === itemId);
                     return item ? (
-                      <ItemThumbnail key={itemId} item={item} size="sm" />
+                      <ItemThumbnail key={`${itemId}-${itemIndex}`} item={item} size="sm" />
                     ) : (
                       <span
-                        key={itemId}
+                        key={`${itemId}-${itemIndex}`}
                         className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-400"
                       >
                         {itemId}
@@ -170,9 +164,9 @@ export default function DashboardPage() {
           <p className="text-xs uppercase tracking-[0.35em] text-zinc-500">AI picks for today</p>
           <h2 className="mt-3 text-2xl font-semibold">Top outfit pairings</h2>
           <div className="mt-6 grid gap-4">
-            {topPicks.map((rec) => (
+            {topPicks.map((rec, recIndex) => (
               <article
-                key={rec.id}
+                key={`${rec.id}-${recIndex}`}
                 className="rounded-[24px] border border-white/10 bg-white/5 p-5"
               >
                 <div className="flex items-start justify-between gap-4">
@@ -185,8 +179,8 @@ export default function DashboardPage() {
                   </span>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {rec.items.map((item) => (
-                    <ItemThumbnail key={item.id} item={item} size="sm" />
+                  {rec.items.map((item, itemIndex) => (
+                    <ItemThumbnail key={`${item.category}-${item.id}-${itemIndex}`} item={item} size="sm" />
                   ))}
                 </div>
                 <p className="mt-3 text-xs leading-5 text-zinc-400">{rec.explanation}</p>
@@ -202,12 +196,10 @@ export default function DashboardPage() {
         </FadeIn>
       </section>
 
-      {/* AI outfit engine */}
       <FadeIn delay={0.1}>
         <GenerateOutfitSection />
       </FadeIn>
 
-      {/* Wardrobe gallery */}
       <FadeIn delay={0.12} className="rounded-[32px] border border-white/10 bg-white/5 p-8">
         <WardrobeGallery items={wardrobeItems} />
       </FadeIn>
