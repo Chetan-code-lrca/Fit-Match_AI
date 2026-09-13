@@ -7,8 +7,7 @@ export const metadata: Metadata = {
     default: "FitMatch AI",
     template: "%s | FitMatch AI",
   },
-  description:
-    "Wardrobe-based outfit recommendations, visual clothing uploads, and a rule-based stylist chat.",
+  description: "AI-powered wardrobe management, outfit analysis, and stylist recommendations.",
 };
 
 export default function RootLayout({
@@ -17,7 +16,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      className="h-full antialiased"
+    >
       <body className="min-h-full bg-black font-sans text-white selection:bg-white selection:text-black">
         {children}
       </body>
