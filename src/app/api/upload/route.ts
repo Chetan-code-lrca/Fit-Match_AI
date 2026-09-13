@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "fs/promises";
 import path from "path";
 
 import { NextResponse } from "next/server";
@@ -6,15 +6,22 @@ import { NextResponse } from "next/server";
 import { uploadFormats } from "@/lib/fitmatch-data";
 
 const UPLOADS_DIR = path.join(process.cwd(), "public", "uploads");
+const MAX_FILES = 8;
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-function ensureUploadsDir() {
-  if (!fs.existsSync(UPLOADS_DIR)) {
-    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-  }
+const extensionByMime: Record<string, ".jpg" | ".png" | ".webp"> = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+};
+
+async function ensureUploadsDir() {
+  await fs.mkdir(UPLOADS_DIR, { recursive: true });
 }
 
 function sanitizeFileName(name: string): string {
-  return name.replace(/[^a-zA-Z0-9._-]/g, "_").toLowerCase();
+  const sanitized = name.replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase();
+  return sanitized.slice(0, 80) || "wardrobe-item";
 }
 
 function inferTags(fileName: string) {
@@ -48,36 +55,54 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const files = formData.getAll("files");
 
-  const invalidFile = files.find(
-    (entry) => !(entry instanceof File) || !uploadFormats.includes(entry.type),
-  );
+  if (files.length === 0) {
+    return NextResponse.json({ message: "At least one image is required." }, { status: 400 });
+  }
 
-  if (invalidFile) {
+  if (files.length > MAX_FILES) {
     return NextResponse.json(
-      { message: "Only JPG, PNG, and WEBP uploads are supported." },
+      { message: `You can upload up to ${MAX_FILES} images at a time.` },
       { status: 400 },
     );
   }
 
-  ensureUploadsDir();
+  const invalidEntry = files.find((entry) => !(entry instanceof File));
+  if (invalidEntry) {
+    return NextResponse.json({ message: "Invalid upload." }, { status: 400 });
+  }
+
+  for (const entry of files) {
+    const file = entry as File;
+    if (!uploadFormats.includes(file.type) || !extensionByMime[file.type]) {
+      return NextResponse.json(
+        { message: "Only JPG, PNG, and WEBP uploads are supported." },
+        { status: 400 },
+      );
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { message: "Each image must be 5 MB or smaller." },
+        { status: 400 },
+      );
+    }
+  }
+
+  await ensureUploadsDir();
 
   const analysis = await Promise.all(
-    files.map(async (entry) => {
+    files.map(async (entry, index) => {
       const file = entry as File;
-      const timestamp = Date.now();
-      const ext = path.extname(file.name) || ".jpg";
-      const base = path.basename(file.name, ext);
-      const savedName = `${sanitizeFileName(base)}_${timestamp}${ext}`;
+      const ext = extensionByMime[file.type];
+      const base = sanitizeFileName(path.basename(file.name, path.extname(file.name)));
+      const savedName = `${base}_${Date.now()}_${index}${ext}`;
       const savedPath = path.join(UPLOADS_DIR, savedName);
 
       const buffer = Buffer.from(await file.arrayBuffer());
-      fs.writeFileSync(savedPath, buffer);
-
-      const imageUrl = `/uploads/${savedName}`;
+      await fs.writeFile(savedPath, buffer);
 
       return {
         fileName: file.name,
-        imageUrl,
+        imageUrl: `/uploads/${savedName}`,
         ...inferTags(file.name),
       };
     }),
