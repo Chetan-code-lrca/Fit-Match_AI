@@ -29,6 +29,15 @@ function getItem(id: string, wardrobe: WardrobeItem[]) {
   return wardrobe.find((item) => item.id === id) ?? wardrobe[0];
 }
 
+function uniqueItems(items: WardrobeItem[]) {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.id)) return false;
+    seen.add(item.id);
+    return true;
+  });
+}
+
 function scorePair(base: WardrobeItem, candidate: WardrobeItem) {
   const sameColor = base.color === candidate.color;
   const paletteMatch = harmonyMap[base.palette].includes(candidate.palette);
@@ -54,7 +63,9 @@ function pickItems(base: WardrobeItem, wardrobe: WardrobeItem[]) {
     (item) =>
       (item.category === "top" || item.category === "layer") && item.id !== base.id,
   );
-  const shoes = wardrobe.filter((item) => item.category === "shoes");
+  const shoes = wardrobe.filter(
+    (item) => item.category === "shoes" && item.id !== base.id,
+  );
   const accessories = wardrobe.filter((item) => item.category === "accessory");
 
   const fallbackBottom = getItem("charcoal-trouser", wardrobe);
@@ -77,12 +88,15 @@ function pickItems(base: WardrobeItem, wardrobe: WardrobeItem[]) {
   const firstLayer = rankedLayers[0]?.item ?? fallbackLayer;
 
   if (!firstBottom || !firstShoe || !firstLayer) {
-    return [base, watch].filter(Boolean) as WardrobeItem[];
+    return uniqueItems([base, watch].filter(Boolean) as WardrobeItem[]);
   }
 
-  return base.category === "bottom"
-    ? [firstLayer, base, firstShoe, watch].filter(Boolean) as WardrobeItem[]
-    : [base, firstBottom, firstShoe, watch].filter(Boolean) as WardrobeItem[];
+  const outfit =
+    base.category === "bottom"
+      ? [firstLayer, base, firstShoe, watch].filter(Boolean) as WardrobeItem[]
+      : [base, firstBottom, firstShoe, watch].filter(Boolean) as WardrobeItem[];
+
+  return uniqueItems(outfit);
 }
 
 export function buildRecommendations(
