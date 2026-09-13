@@ -78,11 +78,13 @@ export function ChatStylist() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-      {/* Chat thread */}
       <section className="flex flex-col rounded-[28px] border border-white/10 bg-white/5">
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 max-h-[60vh]">
+        <div className="flex-1 space-y-4 overflow-y-auto p-6 max-h-[60vh]">
           {messages.map((msg, index) => (
-            <div key={index} className={msg.role === "user" ? "flex justify-end" : "flex flex-col gap-3"}>
+            <div
+              key={`message-${index}`}
+              className={msg.role === "user" ? "flex justify-end" : "flex flex-col gap-3"}
+            >
               {msg.role === "user" ? (
                 <div className="max-w-[80%] rounded-3xl bg-white px-4 py-3 text-sm font-medium text-black">
                   {msg.text}
@@ -97,12 +99,11 @@ export function ChatStylist() {
                       {msg.text}
                     </div>
                   </div>
-                  {/* Inline outfit recommendation cards */}
                   {msg.recommendations && msg.recommendations.length > 0 ? (
                     <div className="ml-11 grid gap-3">
-                      {msg.recommendations.map((rec) => (
+                      {msg.recommendations.map((rec, recIndex) => (
                         <div
-                          key={rec.id}
+                          key={`recommendation-${index}-${rec.id}-${recIndex}`}
                           className="rounded-[20px] border border-white/10 bg-black/40 p-4"
                         >
                           <div className="flex items-center justify-between gap-2">
@@ -112,8 +113,11 @@ export function ChatStylist() {
                             </span>
                           </div>
                           <div className="mt-3 flex flex-wrap gap-2">
-                            {rec.items.map((item) => (
-                              <div key={item.id} className="flex flex-col items-center gap-1">
+                            {rec.items.map((item, itemIndex) => (
+                              <div
+                                key={`${item.category}-${item.id}-${itemIndex}`}
+                                className="flex flex-col items-center gap-1"
+                              >
                                 <ItemThumbnail item={item} size="sm" />
                                 <span className="max-w-[52px] truncate text-center text-[9px] text-zinc-500">
                                   {item.name.split(" ")[0]}
@@ -121,7 +125,6 @@ export function ChatStylist() {
                               </div>
                             ))}
                           </div>
-                          {/* Color palette */}
                           <div className="mt-2 flex items-center gap-2">
                             {Array.from(new Set(rec.items.map((i) => i.color))).map((color) => (
                               <span
@@ -165,7 +168,6 @@ export function ChatStylist() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input bar */}
         <div className="border-t border-white/10 p-4">
           <div className="flex gap-3">
             <input
@@ -187,7 +189,6 @@ export function ChatStylist() {
         </div>
       </section>
 
-      {/* Prompt starters */}
       <section className="space-y-6 rounded-[28px] border border-white/10 bg-white/5 p-6">
         <div>
           <h2 className="text-xl font-semibold">Prompt ideas</h2>
