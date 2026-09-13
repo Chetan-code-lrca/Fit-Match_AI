@@ -1,6 +1,7 @@
 {
   "name": "fitmatch-ai",
   "version": "0.1.0",
+  "description": "Wardrobe-based outfit recommendations and AI-assisted styling guidance.",
   "private": true,
   "engines": {
     "node": ">=20.9.0"
