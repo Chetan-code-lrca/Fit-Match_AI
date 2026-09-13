@@ -63,7 +63,6 @@ function OutfitItemRow({ item, isAccessory = false }: OutfitItemRowProps) {
         isAccessory ? "" : "overflow-hidden"
       }`}
     >
-      {/* Item image – large square */}
       {hasImage && imgSrc ? (
         <div
           className={`relative flex-shrink-0 overflow-hidden rounded-[12px] border border-white/10 ${
@@ -96,7 +95,6 @@ function OutfitItemRow({ item, isAccessory = false }: OutfitItemRowProps) {
         </div>
       )}
 
-      {/* Text info */}
       <div className="min-w-0 flex-1">
         <p className="truncate text-xs font-semibold text-white">{item.name}</p>
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
@@ -119,7 +117,6 @@ function OutfitItemRow({ item, isAccessory = false }: OutfitItemRowProps) {
   );
 }
 
-/** Vertical outfit stack: layer/top → bottom → shoes → accessories */
 function OutfitStack({ items }: { items: WardrobeItem[] }) {
   const layers = items.filter((i) => i.category === "layer" || i.category === "top");
   const bottoms = items.filter((i) => i.category === "bottom");
@@ -129,9 +126,9 @@ function OutfitStack({ items }: { items: WardrobeItem[] }) {
 
   return (
     <div className="flex flex-col gap-2 py-1">
-      {ordered.map((item) => (
+      {ordered.map((item, index) => (
         <OutfitItemRow
-          key={item.id}
+          key={`${item.category}-${item.id}-${index}`}
           item={item}
           isAccessory={item.category === "accessory"}
         />
@@ -168,7 +165,6 @@ export function OutfitCard({
 
   return (
     <article className="group flex flex-col gap-4 rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur transition hover:border-white/25 hover:shadow-lg hover:shadow-white/5">
-      {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-xs uppercase tracking-[0.3em] text-zinc-500">{occasion}</p>
@@ -181,12 +177,10 @@ export function OutfitCard({
         </span>
       </div>
 
-      {/* Visual outfit stack with real item images */}
       <div className="rounded-[20px] border border-white/8 bg-black/30 px-3 py-3">
         <OutfitStack items={items} />
       </div>
 
-      {/* Color palette row */}
       <div className="flex items-center gap-2">
         <span className="text-[10px] uppercase tracking-widest text-zinc-600">Palette</span>
         <div className="flex gap-1.5">
@@ -201,10 +195,8 @@ export function OutfitCard({
         </div>
       </div>
 
-      {/* Reasoning */}
       <p className="text-xs leading-5 text-zinc-400">{reasoning}</p>
 
-      {/* Score breakdown */}
       {colorHarmonyScore !== undefined || aestheticScore !== undefined ? (
         <div className="grid gap-2">
           {colorHarmonyScore !== undefined ? (
