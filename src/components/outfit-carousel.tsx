@@ -55,9 +55,9 @@ export function OutfitCarousel({ outfits }: OutfitCarouselProps) {
         className="scrollbar-none flex gap-4 overflow-x-auto pb-2"
         style={{ scrollSnapType: "x mandatory" }}
       >
-        {outfits.map((outfit) => (
+        {outfits.map((outfit, index) => (
           <div
-            key={`${outfit.outfitName}-${outfit.score}`}
+            key={`${outfit.outfitName}-${outfit.score}-${index}`}
             className="w-[300px] flex-shrink-0 sm:w-[320px]"
             style={{ scrollSnapAlign: "start" }}
           >
