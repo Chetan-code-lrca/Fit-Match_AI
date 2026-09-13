@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 
 import { wardrobeItems, type WardrobeItem } from "@/lib/fitmatch-data";
-import { generateOutfits, type GeneratedOutfit } from "@/lib/style-engine";
+import {
+  buildRecommendations,
+  generateOutfits,
+  type GeneratedOutfit,
+} from "@/lib/style-engine";
 
 async function enrichWithOpenAI(outfits: GeneratedOutfit[]): Promise<GeneratedOutfit[]> {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -63,7 +67,7 @@ export async function GET(request: Request) {
   try {
     outfits = await enrichWithOpenAI(outfits);
   } catch {
-    // fall through with local outfits
+    // Keep local recommendations when the optional provider is unavailable.
   }
 
   return NextResponse.json({ outfits });
@@ -79,26 +83,23 @@ export async function POST(request: Request) {
 
   const count = Math.min(Math.max(Number(body.count ?? 4), 1), 8);
 
-  // If custom items are provided, use them; otherwise use the base item from the wardrobe
   if (body.items && body.items.length > 0) {
-    // Generate outfits using provided custom wardrobe items
-    const { buildRecommendations } = await import("@/lib/style-engine");
-
-    // Temporarily merge custom items with static wardrobe for scoring purposes
     const augmented = [...wardrobeItems, ...body.items];
-    // Include tops and layers as base items for outfit generation
     const baseItems = augmented
-      .filter((i) => i.category === "top" || i.category === "layer")
+      .filter((item) => item.category === "top" || item.category === "layer")
       .slice(0, count);
 
     const customOutfits = baseItems.map((base) => {
-      const rec = buildRecommendations(base.id, "smart-casual")[0] ?? {
+      const rec = buildRecommendations(base.id, "smart-casual", augmented)[0] ?? {
         title: `${base.name} outfit`,
         confidenceScore: 80,
         explanation: `A clean outfit anchored by ${base.color} ${base.name}.`,
-        occasion: "smart-casual",
+        occasion: "smart-casual" as const,
         items: [base],
+        colorHarmonyScore: 80,
+        aestheticScore: 80,
       };
+
       return {
         outfitName: rec.title,
         score: rec.confidenceScore,
@@ -112,7 +113,7 @@ export async function POST(request: Request) {
     try {
       outfits = await enrichWithOpenAI(customOutfits);
     } catch {
-      // fall through
+      // Keep local recommendations when the optional provider is unavailable.
     }
 
     return NextResponse.json({ outfits });
@@ -122,7 +123,7 @@ export async function POST(request: Request) {
   try {
     outfits = await enrichWithOpenAI(outfits);
   } catch {
-    // fall through
+    // Keep local recommendations when the optional provider is unavailable.
   }
 
   return NextResponse.json({ outfits });
