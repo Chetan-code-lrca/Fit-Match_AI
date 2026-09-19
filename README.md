@@ -1,3 +1,5 @@
+[![FitMatch CI](https://github.com/Chetan-code-lrca/Fit-Match_AI/actions/workflows/ci.yml/badge.svg)](https://github.com/Chetan-code-lrca/Fit-Match_AI/actions/workflows/ci.yml)
+
 # FitMatch AI
 
 FitMatch AI is a Next.js app for building outfit suggestions from a wardrobe. It includes a visual wardrobe flow, outfit scoring, an Outfit of the Day view, and a simple stylist chat.
