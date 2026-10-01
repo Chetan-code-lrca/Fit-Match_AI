@@ -1,4 +1,5 @@
 import fs from "fs/promises";
+import { randomUUID } from "crypto";
 import path from "path";
 
 import { NextResponse } from "next/server";
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
       const file = entry as File;
       const ext = extensionByMime[file.type];
       const base = sanitizeFileName(path.basename(file.name, path.extname(file.name)));
-      const savedName = `${base}_${Date.now()}_${index}${ext}`;
+      const savedName = `${base}_${randomUUID()}_${index}${ext}`;
       const savedPath = path.join(UPLOADS_DIR, savedName);
 
       const buffer = Buffer.from(await file.arrayBuffer());
