@@ -83,6 +83,20 @@ test("rejects streamed multipart bodies above the configured byte cap", async ()
   assert.deepEqual(result, { ok: false, reason: "too_large" });
 });
 
+test("rejects requests without a readable bounded body stream", async () => {
+  const request = {
+    headers: new Headers({ "content-type": "multipart/form-data" }),
+    body: null,
+    async formData() {
+      throw new Error("unbounded formData fallback must not be used");
+    },
+  };
+
+  const result = await parseBoundedFormData(request, 1024);
+
+  assert.deepEqual(result, { ok: false, reason: "invalid" });
+});
+
 test("rejects malformed multipart content", async () => {
   const request = new Request("https://example.test/api/upload", {
     method: "POST",
