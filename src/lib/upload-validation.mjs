@@ -17,6 +17,15 @@ function readUint32LE(bytes, offset) {
   ) >>> 0;
 }
 
+function readUint32BE(bytes, offset) {
+  return (
+    (bytes[offset] << 24) |
+    (bytes[offset + 1] << 16) |
+    (bytes[offset + 2] << 8) |
+    bytes[offset + 3]
+  ) >>> 0;
+}
+
 export function isSupportedImagePayload(mimeType, header, footer, fileSize) {
   if (!MIME_TYPES.has(mimeType) || !(header instanceof Uint8Array) ||
       !(footer instanceof Uint8Array) || !Number.isSafeInteger(fileSize) || fileSize < 12) {
@@ -33,7 +42,9 @@ export function isSupportedImagePayload(mimeType, header, footer, fileSize) {
     return fileSize >= 45 &&
       header.length >= 24 &&
       header[0] === 0x89 && startsWithAscii(header, "PNG", 1) &&
-      readUint32LE(new Uint8Array([header[11], header[10], header[9], header[8]]), 0) === 13 &&
+      header[4] === 0x0d && header[5] === 0x0a &&
+      header[6] === 0x1a && header[7] === 0x0a &&
+      readUint32BE(header, 8) === 13 &&
       startsWithAscii(header, "IHDR", 12) &&
       footer.length >= 12 &&
       footer[footer.length - 12] === 0 &&
