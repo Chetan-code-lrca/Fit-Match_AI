@@ -83,11 +83,9 @@ export async function parseBoundedFormData(request, maxBytes) {
 
   const reader = request.body?.getReader();
   if (!reader) {
-    try {
-      return { ok: true, formData: await request.formData() };
-    } catch {
-      return { ok: false, reason: "invalid" };
-    }
+    // Do not fall back to unbounded formData() parsing when there is no
+    // readable body stream. Upload requests must pass through this byte cap.
+    return { ok: false, reason: "invalid" };
   }
 
   const chunks = [];
