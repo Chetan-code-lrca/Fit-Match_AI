@@ -9,7 +9,7 @@ The recommendation engine is local and rule-based. An optional OpenAI integratio
 ## Features
 
 - Wardrobe dashboard with sample clothing data
-- Upload flow for JPG, PNG, and WEBP images
+- Upload flow for JPG, PNG, and WEBP images (up to 8 files per request, 5 MiB per file, and 41 MiB total request size)
 - Client-side dominant-color extraction for uploaded images
 - Optional background removal before saving an item
 - Outfit suggestions for campus, travel, smart-casual, streetwear, and night-out
@@ -121,7 +121,7 @@ There is one important limitation in the current prototype: wardrobe metadata is
 
 ## Uploads and privacy
 
-The upload endpoint accepts JPG, PNG, and WEBP files. Uploaded files are saved as public files by the current prototype, so do not use private personal photos on a public deployment until authentication and persistent private storage are implemented.
+The upload endpoint accepts JPG, PNG, and WEBP files. It enforces a 41 MiB total multipart request cap, a 5 MiB per-file cap, an eight-file batch cap, and checks that the file signature agrees with the declared image type before writing files. Signature checks are a content-type sanity check, not full image decoding or malware scanning. Uploaded files are saved as public files by the current prototype, so do not use private personal photos on a public deployment until authentication and persistent private storage are implemented.
 
 The login screen is currently a front-end prototype. It does not authenticate a user or create a private session.
 
