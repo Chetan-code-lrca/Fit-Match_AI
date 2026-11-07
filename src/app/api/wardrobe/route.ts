@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import type { WardrobeItem } from "@/lib/fitmatch-data";
+import { isLocalDemoStorageAllowed } from "@/lib/local-demo-storage.js";
 import {
   addUserWardrobeItem,
   deleteUserWardrobeItem,
@@ -9,12 +10,24 @@ import {
 
 export const dynamic = "force-dynamic";
 
+function storageDisabledResponse() {
+  return NextResponse.json(
+    {
+      message:
+        "Filesystem-backed wardrobe storage is disabled in production. Configure authenticated, user-isolated persistent storage before enabling this API.",
+    },
+    { status: 503 },
+  );
+}
+
 export async function GET() {
+  if (!isLocalDemoStorageAllowed()) return storageDisabledResponse();
   const items = readUserWardrobeItems();
   return NextResponse.json({ items });
 }
 
 export async function POST(request: Request) {
+  if (!isLocalDemoStorageAllowed()) return storageDisabledResponse();
   let body: Partial<WardrobeItem> = {};
   try {
     body = (await request.json()) as Partial<WardrobeItem>;
@@ -47,6 +60,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  if (!isLocalDemoStorageAllowed()) return storageDisabledResponse();
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   if (!id) {
