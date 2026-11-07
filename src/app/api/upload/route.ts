@@ -5,10 +5,15 @@ import path from "path";
 import { NextResponse } from "next/server";
 
 import { uploadFormats } from "@/lib/fitmatch-data";
+import {
+  isSupportedImagePayload,
+  parseBoundedFormData,
+} from "@/lib/upload-validation.mjs";
 
 const UPLOADS_DIR = path.join(process.cwd(), "public", "uploads");
 const MAX_FILES = 8;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_REQUEST_SIZE = MAX_FILES * MAX_FILE_SIZE + 1024 * 1024;
 
 const extensionByMime: Record<string, ".jpg" | ".png" | ".webp"> = {
   "image/jpeg": ".jpg",
@@ -53,8 +58,17 @@ function inferTags(fileName: string) {
 }
 
 export async function POST(request: Request) {
-  const formData = await request.formData();
-  const files = formData.getAll("files");
+  const parsed = await parseBoundedFormData(request, MAX_REQUEST_SIZE);
+  if (!parsed.ok) {
+    return parsed.reason === "too_large"
+      ? NextResponse.json(
+          { message: "The upload request exceeds the 41 MiB total limit." },
+          { status: 413 },
+        )
+      : NextResponse.json({ message: "Invalid multipart upload request." }, { status: 400 });
+  }
+
+  const files = parsed.formData.getAll("files");
 
   if (files.length === 0) {
     return NextResponse.json({ message: "At least one image is required." }, { status: 400 });
@@ -80,34 +94,68 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size === 0 || file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { message: "Each image must be 5 MB or smaller." },
+        { message: "Each image must be greater than 0 bytes and 5 MB or smaller." },
         { status: 400 },
       );
     }
   }
 
-  await ensureUploadsDir();
+  const invalidPayload = await Promise.all(files.map(async (entry) => {
+    const file = entry as File;
+    const header = new Uint8Array(await file.slice(0, 32).arrayBuffer());
+    const footer = new Uint8Array(await file.slice(-12).arrayBuffer());
+    return !isSupportedImagePayload(file.type, header, footer, file.size);
+  }));
 
-  const analysis = await Promise.all(
-    files.map(async (entry, index) => {
-      const file = entry as File;
+  if (invalidPayload.some(Boolean)) {
+    return NextResponse.json(
+      { message: "An uploaded file's contents do not match its declared image type." },
+      { status: 400 },
+    );
+  }
+
+  try {
+    await ensureUploadsDir();
+  } catch {
+    return NextResponse.json({ message: "Image storage is currently unavailable." }, { status: 503 });
+  }
+
+  const savedPaths: string[] = [];
+  const analysis: Array<{
+    fileName: string;
+    imageUrl: string;
+    dominantColors: string[];
+    tags: string[];
+    occasionHint: string;
+  }> = [];
+
+  try {
+    for (let index = 0; index < files.length; index += 1) {
+      const file = files[index] as File;
       const ext = extensionByMime[file.type];
       const base = sanitizeFileName(path.basename(file.name, path.extname(file.name)));
       const savedName = `${base}_${randomUUID()}_${index}${ext}`;
       const savedPath = path.join(UPLOADS_DIR, savedName);
 
       const buffer = Buffer.from(await file.arrayBuffer());
-      await fs.writeFile(savedPath, buffer);
+      await fs.writeFile(savedPath, buffer, { flag: "wx" });
+      savedPaths.push(savedPath);
 
-      return {
+      analysis.push({
         fileName: file.name,
         imageUrl: `/uploads/${savedName}`,
         ...inferTags(file.name),
-      };
-    }),
-  );
+      });
+    }
+  } catch {
+    await Promise.all(savedPaths.map((savedPath) => fs.unlink(savedPath).catch(() => undefined)));
+    return NextResponse.json(
+      { message: "The images could not be saved. No partial upload was retained." },
+      { status: 503 },
+    );
+  }
 
   return NextResponse.json({ analysis });
 }
