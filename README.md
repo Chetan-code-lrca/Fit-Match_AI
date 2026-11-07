@@ -53,6 +53,10 @@ Create `.env.local` in the project root.
 
 ```text
 OPENAI_API_KEY=
+
+# Unsafe local JSON/public-file storage is enabled automatically in development.
+# Do not set this to true on an internet-facing production deployment.
+FITMATCH_ALLOW_INSECURE_LOCAL_STORAGE=false
 ```
 
 `OPENAI_API_KEY` is optional. Keep server-side credentials out of source files and never commit `.env.local`.
@@ -117,7 +121,9 @@ For Vercel:
 3. Add `OPENAI_API_KEY` only when OpenAI explanation generation is needed.
 4. Deploy from the `main` branch.
 
-There is one important limitation in the current prototype: wardrobe metadata is stored in `data/wardrobe.json` and uploaded images are written under `public/uploads/`. That filesystem storage is suitable for local development, but it is not durable or user-isolated storage for a serverless production deployment. A production version needs persistent object storage and a database before users rely on saved wardrobes or private images.
+There is one important limitation in the current prototype: wardrobe metadata is stored in `data/wardrobe.json` and uploaded images are written under `public/uploads/`. That filesystem storage is suitable only for a single-user local demo; it is not durable or user-isolated storage for a serverless or multi-user deployment.
+
+For safety, the `/api/wardrobe` and `/api/upload` filesystem-backed endpoints return HTTP 503 in production by default. They can be explicitly re-enabled with `FITMATCH_ALLOW_INSECURE_LOCAL_STORAGE=true`, but this is only for isolated demonstrations and must not be enabled on an internet-facing deployment. Before production use, implement real authentication and authorization, per-user database records, private object storage, upload quotas, and deletion/retention policies.
 
 ## Uploads and privacy
 
