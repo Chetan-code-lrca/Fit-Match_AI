@@ -124,23 +124,22 @@ export async function POST(request: Request) {
   await ensureUploadsDir();
 
   const savedPaths: string[] = [];
+  const analysis = [];
   try {
-    const analysis = await Promise.all(
-      validatedFiles.map(async ({ file, buffer }, index) => {
-        const ext = extensionByMime[file.type];
-        const base = sanitizeFileName(path.basename(file.name, path.extname(file.name)));
-        const savedName = `${base}_${randomUUID()}_${index}${ext}`;
-        const savedPath = path.join(UPLOADS_DIR, savedName);
-        await fs.writeFile(savedPath, buffer, { flag: "wx" });
-        savedPaths.push(savedPath);
+    for (const [index, { file, buffer }] of validatedFiles.entries()) {
+      const ext = extensionByMime[file.type];
+      const base = sanitizeFileName(path.basename(file.name, path.extname(file.name)));
+      const savedName = `${base}_${randomUUID()}_${index}${ext}`;
+      const savedPath = path.join(UPLOADS_DIR, savedName);
+      await fs.writeFile(savedPath, buffer, { flag: "wx" });
+      savedPaths.push(savedPath);
 
-        return {
-          fileName: file.name,
-          imageUrl: `/uploads/${savedName}`,
-          ...inferTags(file.name),
-        };
-      }),
-    );
+      analysis.push({
+        fileName: file.name,
+        imageUrl: `/uploads/${savedName}`,
+        ...inferTags(file.name),
+      });
+    }
 
     return NextResponse.json({ analysis });
   } catch {
