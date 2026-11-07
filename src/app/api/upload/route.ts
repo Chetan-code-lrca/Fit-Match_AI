@@ -5,10 +5,13 @@ import path from "path";
 import { NextResponse } from "next/server";
 
 import { uploadFormats } from "@/lib/fitmatch-data";
+import { hasValidImageSignature } from "@/lib/image-validation.js";
+import { isLocalDemoStorageAllowed } from "@/lib/local-demo-storage.js";
 
 const UPLOADS_DIR = path.join(process.cwd(), "public", "uploads");
 const MAX_FILES = 8;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_REQUEST_SIZE = MAX_FILES * MAX_FILE_SIZE + 256 * 1024;
 
 const extensionByMime: Record<string, ".jpg" | ".png" | ".webp"> = {
   "image/jpeg": ".jpg",
@@ -53,7 +56,27 @@ function inferTags(fileName: string) {
 }
 
 export async function POST(request: Request) {
-  const formData = await request.formData();
+  if (!isLocalDemoStorageAllowed()) {
+    return NextResponse.json(
+      {
+        message:
+          "Local public-file uploads are disabled in production. Configure authenticated private object storage before enabling user uploads.",
+      },
+      { status: 503 },
+    );
+  }
+
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (contentLength > MAX_REQUEST_SIZE) {
+    return NextResponse.json({ message: "The upload request is too large." }, { status: 413 });
+  }
+
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return NextResponse.json({ message: "Invalid multipart upload body." }, { status: 400 });
+  }
   const files = formData.getAll("files");
 
   if (files.length === 0) {
@@ -72,6 +95,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: "Invalid upload." }, { status: 400 });
   }
 
+  const validatedFiles: Array<{ file: File; buffer: Buffer }> = [];
   for (const entry of files) {
     const file = entry as File;
     if (!uploadFormats.includes(file.type) || !extensionByMime[file.type]) {
@@ -80,34 +104,47 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size === 0 || file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { message: "Each image must be 5 MB or smaller." },
+        { message: "Each image must be larger than 0 bytes and 5 MB or smaller." },
         { status: 400 },
       );
     }
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    if (!hasValidImageSignature(file.type, buffer)) {
+      return NextResponse.json(
+        { message: "The file contents do not match the declared JPG, PNG, or WEBP type." },
+        { status: 400 },
+      );
+    }
+    validatedFiles.push({ file, buffer });
   }
 
   await ensureUploadsDir();
 
-  const analysis = await Promise.all(
-    files.map(async (entry, index) => {
-      const file = entry as File;
-      const ext = extensionByMime[file.type];
-      const base = sanitizeFileName(path.basename(file.name, path.extname(file.name)));
-      const savedName = `${base}_${randomUUID()}_${index}${ext}`;
-      const savedPath = path.join(UPLOADS_DIR, savedName);
+  const savedPaths: string[] = [];
+  try {
+    const analysis = await Promise.all(
+      validatedFiles.map(async ({ file, buffer }, index) => {
+        const ext = extensionByMime[file.type];
+        const base = sanitizeFileName(path.basename(file.name, path.extname(file.name)));
+        const savedName = `${base}_${randomUUID()}_${index}${ext}`;
+        const savedPath = path.join(UPLOADS_DIR, savedName);
+        await fs.writeFile(savedPath, buffer, { flag: "wx" });
+        savedPaths.push(savedPath);
 
-      const buffer = Buffer.from(await file.arrayBuffer());
-      await fs.writeFile(savedPath, buffer);
+        return {
+          fileName: file.name,
+          imageUrl: `/uploads/${savedName}`,
+          ...inferTags(file.name),
+        };
+      }),
+    );
 
-      return {
-        fileName: file.name,
-        imageUrl: `/uploads/${savedName}`,
-        ...inferTags(file.name),
-      };
-    }),
-  );
-
-  return NextResponse.json({ analysis });
+    return NextResponse.json({ analysis });
+  } catch {
+    await Promise.all(savedPaths.map((savedPath) => fs.unlink(savedPath).catch(() => undefined)));
+    return NextResponse.json({ message: "Could not save uploaded images." }, { status: 500 });
+  }
 }
