@@ -5,6 +5,7 @@ import path from "path";
 import { NextResponse } from "next/server";
 
 import { uploadFormats } from "@/lib/fitmatch-data";
+import { isLocalDemoStorageAllowed } from "@/lib/local-demo-storage.js";
 import {
   isSupportedImagePayload,
   parseBoundedFormData,
@@ -58,6 +59,16 @@ function inferTags(fileName: string) {
 }
 
 export async function POST(request: Request) {
+  if (!isLocalDemoStorageAllowed()) {
+    return NextResponse.json(
+      {
+        message:
+          "Local public-file uploads are disabled in production. Configure authenticated private object storage before enabling user uploads.",
+      },
+      { status: 503 },
+    );
+  }
+
   const parsed = await parseBoundedFormData(request, MAX_REQUEST_SIZE);
   if (!parsed.ok) {
     return parsed.reason === "too_large"
