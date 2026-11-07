@@ -29,6 +29,9 @@ jobs:
       - name: Verify lockfile
         run: npm ci --ignore-scripts
 
+      - name: Unit tests
+        run: npm test
+
       - name: Lint
         run: npm run lint
 
