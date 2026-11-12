@@ -43,30 +43,30 @@ The score is a relative styling index, not a probability or a guarantee that an 
 
 Requirements: Node.js 20.9+ and npm.
 
-\`\`\`bash
+```bash
 git clone https://github.com/Chetan-code-lrca/Fit-Match_AI.git
 cd Fit-Match_AI
 npm ci
 npm run dev
-\`\`\`
+```
 
 Open http://localhost:3000.
 
 For a production build:
 
-\`\`\`bash
+```bash
 npm run lint
 npm run build
 npm start
-\`\`\`
+```
 
 ## Environment variables
 
 Create .env.local in the project root.
 
-\`\`\`text
+```text
 OPENAI_API_KEY=
-\`\`\`
+```
 
 The key is optional. Without it, outfit matching and deterministic explanations continue to work. Keep secrets out of source control.
 
