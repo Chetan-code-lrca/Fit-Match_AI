@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #050816;
-  --foreground: #f4f4f5;
+  --background: #10120f;
+  --foreground: #f4f2e9;
+  --surface: #191d17;
+  --surface-raised: #20251e;
+  --accent: #d3ee9c;
+  --muted: #a2a79a;
 }
 
 @theme inline {
@@ -12,14 +16,16 @@
   --font-mono: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
+html { scroll-behavior: smooth; }
+
 body {
+  min-height: 100%;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans, Arial, Helvetica, sans-serif);
@@ -27,49 +33,46 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Smooth scrolling everywhere */
-html {
-  scroll-behavior: smooth;
-}
+::selection { color: #10120f; background: #d3ee9c; }
 
-/* Styled scrollbar — thin and dark for premium feel */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 a,
-button {
-  -webkit-tap-highlight-color: transparent;
+button,
+select { -webkit-tap-highlight-color: transparent; }
+
+button,
+select { font: inherit; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(211, 238, 156, 0.42); }
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-/* Utility for hiding native scrollbar in carousels */
 .scrollbar-none {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

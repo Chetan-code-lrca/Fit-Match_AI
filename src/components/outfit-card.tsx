@@ -16,18 +16,17 @@ export function ItemThumbnail({ item, size = "md" }: ItemThumbnailProps) {
     size === "sm" ? "h-14 w-14" : size === "lg" ? "h-28 w-28" : "h-20 w-20";
   const textColor = light ? "text-black/70" : "text-white/80";
   const emojiSize = size === "sm" ? "text-xl" : size === "lg" ? "text-4xl" : "text-2xl";
+  const imageSource = item.extractedItemImage ?? item.imageUrl;
 
-  if (item.extractedItemImage ?? item.imageUrl) {
+  if (imageSource) {
     return (
-      <div
-        className={`${dim} relative flex-shrink-0 overflow-hidden rounded-2xl border border-white/10`}
-      >
+      <div className={dim + " relative flex-shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-[#20251e]"}>
         <Image
-          src={(item.extractedItemImage ?? item.imageUrl)!}
+          src={imageSource}
           alt={item.name}
           fill
           className="object-cover"
-          sizes="80px"
+          sizes="112px"
           unoptimized
         />
       </div>
@@ -36,14 +35,14 @@ export function ItemThumbnail({ item, size = "md" }: ItemThumbnailProps) {
 
   return (
     <div
-      className={`${dim} flex flex-shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border border-white/10`}
+      className={dim + " flex flex-shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border border-white/10"}
       style={{ backgroundColor: hex }}
       title={item.name}
     >
-      <span className={`${emojiSize} leading-none`} role="img" aria-label={label}>
+      <span className={emojiSize + " leading-none"} role="img" aria-label={label}>
         {emoji}
       </span>
-      <span className={`text-[10px] font-medium leading-none ${textColor}`}>{label}</span>
+      <span className={"text-[10px] font-medium leading-none " + textColor}>{label}</span>
     </div>
   );
 }
@@ -54,62 +53,48 @@ type OutfitItemRowProps = {
 };
 
 function OutfitItemRow({ item, isAccessory = false }: OutfitItemRowProps) {
-  const hasImage = !!(item.extractedItemImage ?? item.imageUrl);
-  const imgSrc = item.extractedItemImage ?? item.imageUrl;
+  const imageSource = item.extractedItemImage ?? item.imageUrl;
+  const imageSize = isAccessory ? "h-12 w-12" : "h-16 w-16";
 
   return (
-    <div
-      className={`group/item relative flex items-center gap-3 rounded-[16px] border border-white/8 bg-white/5 p-2 transition hover:border-white/20 hover:bg-white/10 ${
-        isAccessory ? "" : "overflow-hidden"
-      }`}
-    >
-      {hasImage && imgSrc ? (
-        <div
-          className={`relative flex-shrink-0 overflow-hidden rounded-[12px] border border-white/10 ${
-            isAccessory ? "h-12 w-12" : "h-20 w-20"
-          }`}
-        >
+    <div className="group/item relative flex items-center gap-3 rounded-[15px] border border-white/[0.07] bg-[#11140f]/70 p-2 transition hover:border-[#d3ee9c]/20 hover:bg-white/[0.04]">
+      {imageSource ? (
+        <div className={"relative shrink-0 overflow-hidden rounded-[11px] border border-white/10 bg-[#20251e] " + imageSize}>
           <Image
-            src={imgSrc}
+            src={imageSource}
             alt={item.name}
             fill
             className="object-cover transition duration-300 group-hover/item:scale-105"
-            sizes={isAccessory ? "48px" : "80px"}
+            sizes={isAccessory ? "48px" : "64px"}
             unoptimized
           />
         </div>
       ) : (
         <div
-          className={`flex flex-shrink-0 flex-col items-center justify-center gap-1 rounded-[12px] border border-white/10 ${
-            isAccessory ? "h-12 w-12" : "h-20 w-20"
-          }`}
+          className={"flex shrink-0 flex-col items-center justify-center rounded-[11px] border border-white/10 " + imageSize}
           style={{ backgroundColor: resolveColorHex(item.color) }}
         >
-          <span
-            className={`leading-none ${isAccessory ? "text-xl" : "text-3xl"}`}
-            role="img"
-            aria-label={categoryMeta[item.category].label}
-          >
+          <span className={isAccessory ? "text-xl" : "text-2xl"} role="img" aria-label={categoryMeta[item.category].label}>
             {categoryMeta[item.category].emoji}
           </span>
         </div>
       )}
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-semibold text-white">{item.name}</p>
+        <p className="truncate text-xs font-semibold text-[#f4f2e9]">{item.name}</p>
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
           <span
-            className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-full border border-white/20"
+            className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border border-white/20"
             style={{ backgroundColor: resolveColorHex(item.color) }}
           />
           <span className="text-[10px] capitalize text-zinc-500">{item.color}</span>
           {item.style ? (
-            <span className="rounded-full border border-white/10 px-1.5 py-0.5 text-[9px] text-zinc-500">
+            <span className="rounded-full border border-white/[0.08] px-1.5 py-0.5 text-[9px] text-zinc-500">
               {item.style}
             </span>
           ) : null}
         </div>
-        <p className="mt-1 text-[10px] uppercase tracking-wider text-zinc-600">
+        <p className="mt-1 text-[9px] uppercase tracking-[0.14em] text-zinc-600">
           {categoryMeta[item.category].label}
         </p>
       </div>
@@ -118,17 +103,17 @@ function OutfitItemRow({ item, isAccessory = false }: OutfitItemRowProps) {
 }
 
 function OutfitStack({ items }: { items: WardrobeItem[] }) {
-  const layers = items.filter((i) => i.category === "layer" || i.category === "top");
-  const bottoms = items.filter((i) => i.category === "bottom");
-  const shoes = items.filter((i) => i.category === "shoes");
-  const accessories = items.filter((i) => i.category === "accessory");
-  const ordered = [...layers, ...bottoms, ...shoes, ...accessories];
+  const uppers = items.filter((item) => item.category === "layer" || item.category === "top");
+  const bottoms = items.filter((item) => item.category === "bottom");
+  const shoes = items.filter((item) => item.category === "shoes");
+  const accessories = items.filter((item) => item.category === "accessory");
+  const ordered = [...uppers, ...bottoms, ...shoes, ...accessories];
 
   return (
     <div className="flex flex-col gap-2 py-1">
       {ordered.map((item, index) => (
         <OutfitItemRow
-          key={`${item.category}-${item.id}-${index}`}
+          key={item.category + "-" + item.id + "-" + index}
           item={item}
           isAccessory={item.category === "accessory"}
         />
@@ -156,38 +141,29 @@ export function OutfitCard({
   colorHarmonyScore,
   aestheticScore,
 }: OutfitCardProps) {
-  const scoreColor =
-    score >= 90
-      ? "bg-emerald-400 text-black"
-      : score >= 75
-        ? "bg-white text-black"
-        : "bg-zinc-700 text-white";
-
   return (
-    <article className="group flex flex-col gap-4 rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur transition hover:border-white/25 hover:shadow-lg hover:shadow-white/5">
+    <article className="group flex h-full flex-col gap-4 rounded-[25px] border border-white/[0.08] bg-[#191d17] p-4 transition hover:-translate-y-0.5 hover:border-[#d3ee9c]/20 hover:shadow-[0_18px_50px_rgba(0,0,0,0.2)] sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-xs uppercase tracking-[0.3em] text-zinc-500">{occasion}</p>
-          <h3 className="mt-1 text-base font-semibold leading-snug">{outfitName}</h3>
+          <p className="truncate text-[9px] font-semibold uppercase tracking-[0.2em] text-[#d3ee9c]">{occasion}</p>
+          <h3 className="mt-2 text-base font-semibold leading-snug text-[#f4f2e9]">{outfitName}</h3>
         </div>
-        <span
-          className={`flex-shrink-0 rounded-full px-3 py-1 text-xs font-bold ${scoreColor}`}
-        >
-          {score}%
+        <span className="shrink-0 rounded-full border border-[#d3ee9c]/25 bg-[#d3ee9c]/[0.08] px-2.5 py-1.5 text-[11px] font-bold tabular-nums text-[#d3ee9c]">
+          {score}% match
         </span>
       </div>
 
-      <div className="rounded-[20px] border border-white/8 bg-black/30 px-3 py-3">
+      <div className="rounded-[18px] border border-white/[0.07] bg-[#11140f]/70 p-2.5">
         <OutfitStack items={items} />
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="text-[10px] uppercase tracking-widest text-zinc-600">Palette</span>
+        <span className="text-[9px] font-medium uppercase tracking-[0.16em] text-zinc-600">Palette</span>
         <div className="flex gap-1.5">
-          {Array.from(new Set(items.map((i) => i.color))).map((color) => (
+          {Array.from(new Set(items.map((item) => item.color))).map((color) => (
             <span
               key={color}
-              className="h-4 w-4 rounded-full border border-white/20 shadow-sm transition hover:scale-125"
+              className="h-3.5 w-3.5 rounded-full border border-white/20 transition hover:scale-125"
               style={{ backgroundColor: resolveColorHex(color) }}
               title={color}
             />
@@ -195,34 +171,28 @@ export function OutfitCard({
         </div>
       </div>
 
-      <p className="text-xs leading-5 text-zinc-400">{reasoning}</p>
+      <p className="text-[11px] leading-5 text-zinc-400">{reasoning}</p>
 
-      {colorHarmonyScore !== undefined || aestheticScore !== undefined ? (
-        <div className="grid gap-2">
-          {colorHarmonyScore !== undefined ? (
-            <ScoreBar label="Color harmony" value={colorHarmonyScore} />
-          ) : null}
-          {aestheticScore !== undefined ? (
-            <ScoreBar label="Aesthetic" value={aestheticScore} />
-          ) : null}
-          <ScoreBar label="Confidence" value={score} />
-        </div>
-      ) : null}
+      <div className="mt-auto grid gap-2 border-t border-white/[0.07] pt-3">
+        {colorHarmonyScore !== undefined ? <ScoreBar label="Colour harmony" value={colorHarmonyScore} /> : null}
+        {aestheticScore !== undefined ? <ScoreBar label="Style coherence" value={aestheticScore} /> : null}
+        <ScoreBar label="Overall match" value={score} />
+      </div>
     </article>
   );
 }
 
 function ScoreBar({ label, value }: { label: string; value: number }) {
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between text-[10px]">
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-[9px]">
         <span className="text-zinc-500">{label}</span>
-        <span className="text-zinc-400">{value}%</span>
+        <span className="tabular-nums text-zinc-400">{value}%</span>
       </div>
-      <div className="h-1 rounded-full bg-white/10">
+      <div className="h-1 overflow-hidden rounded-full bg-white/[0.08]">
         <div
-          className="h-1 rounded-full bg-gradient-to-r from-zinc-400 to-white transition-all"
-          style={{ width: `${value}%` }}
+          className="h-full rounded-full bg-[#d3ee9c] transition-all"
+          style={{ width: value + "%" }}
         />
       </div>
     </div>

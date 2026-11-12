@@ -1,20 +1,25 @@
 import { NextResponse } from "next/server";
 
-import { wardrobeItems, type WardrobeItem } from "@/lib/fitmatch-data";
-import {
-  buildRecommendations,
-  generateOutfits,
-  type GeneratedOutfit,
-} from "@/lib/style-engine";
+import { wardrobeItems, type WardrobeItem, type WardrobeOccasion } from "@/lib/fitmatch-data";
+import { generateOutfits, type GeneratedOutfit } from "@/lib/style-engine";
+import { readUserWardrobeItems } from "@/lib/wardrobe-server";
+
+const validOccasions: WardrobeOccasion[] = [
+  "campus",
+  "travel",
+  "smart-casual",
+  "streetwear",
+  "night-out",
+];
 
 async function enrichWithOpenAI(outfits: GeneratedOutfit[]): Promise<GeneratedOutfit[]> {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return outfits;
+  if (!apiKey || outfits.length === 0) return outfits;
 
   const prompt = outfits
-    .map(
-      (o, i) =>
-        `${i + 1}. ${o.outfitName}: ${o.items.map((item) => `${item.color} ${item.name}`).join(", ")}`,
+    .map((outfit, index) =>
+      (index + 1) + ". " + outfit.outfitName + ": " +
+      outfit.items.map((item) => item.color + " " + item.name).join(", "),
     )
     .join("\n");
 
@@ -22,7 +27,7 @@ async function enrichWithOpenAI(outfits: GeneratedOutfit[]): Promise<GeneratedOu
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: "Bearer " + apiKey,
     },
     body: JSON.stringify({
       model: "gpt-4o-mini",
@@ -30,12 +35,12 @@ async function enrichWithOpenAI(outfits: GeneratedOutfit[]): Promise<GeneratedOu
         {
           role: "system",
           content:
-            "You are a concise fashion stylist. Given outfit combinations, write a single punchy sentence (max 20 words) of styling reasoning for each outfit. Return only a JSON array of strings in the same order.",
+            "You are a concise fashion stylist. Given outfit combinations, write a single useful styling explanation (max 20 words) for each outfit. Return only a JSON array of strings in the same order.",
         },
         { role: "user", content: prompt },
       ],
       max_tokens: 400,
-      temperature: 0.7,
+      temperature: 0.5,
     }),
   });
 
@@ -48,82 +53,83 @@ async function enrichWithOpenAI(outfits: GeneratedOutfit[]): Promise<GeneratedOu
 
   try {
     const reasonings = JSON.parse(content) as string[];
-    return outfits.map((outfit, i) => ({
+    if (!Array.isArray(reasonings)) return outfits;
+    return outfits.map((outfit, index) => ({
       ...outfit,
-      reasoning: reasonings[i] ?? outfit.reasoning,
+      reasoning: typeof reasonings[index] === "string" ? reasonings[index] : outfit.reasoning,
     }));
   } catch {
     return outfits;
   }
 }
 
+function readOccasion(value: string | null): WardrobeOccasion {
+  return validOccasions.includes(value as WardrobeOccasion)
+    ? (value as WardrobeOccasion)
+    : "campus";
+}
+
+function readCount(value: unknown, fallback = 4) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.min(Math.max(Math.floor(parsed), 1), 8) : fallback;
+}
+
+function getActiveWardrobe(customItems?: WardrobeItem[]) {
+  if (customItems && customItems.length > 0) {
+    return Array.from(new Map(customItems.map((item) => [item.id, item])).values());
+  }
+  const savedItems = readUserWardrobeItems();
+  return savedItems.length > 0 ? savedItems : wardrobeItems;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const item = searchParams.get("item") ?? undefined;
-  const count = Math.min(Math.max(Number(searchParams.get("count") ?? "4"), 1), 8);
+  const selectedItem = searchParams.get("item") ?? undefined;
+  const count = readCount(searchParams.get("count"));
+  const occasion = readOccasion(searchParams.get("occasion"));
+  const activeWardrobe = getActiveWardrobe();
+  const item = selectedItem && activeWardrobe.some((entry) => entry.id === selectedItem)
+    ? selectedItem
+    : undefined;
 
-  let outfits = generateOutfits(item, count);
-
+  let outfits = generateOutfits(item, count, activeWardrobe, occasion);
   try {
     outfits = await enrichWithOpenAI(outfits);
   } catch {
-    // Keep local recommendations when the optional provider is unavailable.
+    // Local matching remains available when the optional text provider is unavailable.
   }
 
   return NextResponse.json({ outfits });
 }
 
 export async function POST(request: Request) {
-  let body: { items?: WardrobeItem[]; baseItemId?: string; count?: number } = {};
+  let body: {
+    items?: WardrobeItem[];
+    baseItemId?: string;
+    count?: number;
+    occasion?: WardrobeOccasion;
+  } = {};
+
   try {
     body = (await request.json()) as typeof body;
   } catch {
     return NextResponse.json({ message: "Invalid JSON body." }, { status: 400 });
   }
 
-  const count = Math.min(Math.max(Number(body.count ?? 4), 1), 8);
+  const count = readCount(body.count);
+  const occasion = body.occasion && validOccasions.includes(body.occasion)
+    ? body.occasion
+    : "campus";
+  const activeWardrobe = getActiveWardrobe(body.items);
+  const requestedBase = body.baseItemId && activeWardrobe.some((item) => item.id === body.baseItemId)
+    ? body.baseItemId
+    : undefined;
 
-  if (body.items && body.items.length > 0) {
-    const augmented = [...wardrobeItems, ...body.items];
-    const baseItems = augmented
-      .filter((item) => item.category === "top" || item.category === "layer")
-      .slice(0, count);
-
-    const customOutfits = baseItems.map((base) => {
-      const rec = buildRecommendations(base.id, "smart-casual", augmented)[0] ?? {
-        title: `${base.name} outfit`,
-        confidenceScore: 80,
-        explanation: `A clean outfit anchored by ${base.color} ${base.name}.`,
-        occasion: "smart-casual" as const,
-        items: [base],
-        colorHarmonyScore: 80,
-        aestheticScore: 80,
-      };
-
-      return {
-        outfitName: rec.title,
-        score: rec.confidenceScore,
-        reasoning: rec.explanation,
-        occasion: rec.occasion,
-        items: rec.items,
-      };
-    });
-
-    let outfits = customOutfits;
-    try {
-      outfits = await enrichWithOpenAI(customOutfits);
-    } catch {
-      // Keep local recommendations when the optional provider is unavailable.
-    }
-
-    return NextResponse.json({ outfits });
-  }
-
-  let outfits = generateOutfits(body.baseItemId, count);
+  let outfits = generateOutfits(requestedBase, count, activeWardrobe, occasion);
   try {
     outfits = await enrichWithOpenAI(outfits);
   } catch {
-    // Keep local recommendations when the optional provider is unavailable.
+    // Local matching remains available when the optional text provider is unavailable.
   }
 
   return NextResponse.json({ outfits });
