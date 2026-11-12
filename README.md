@@ -1,135 +1,107 @@
-[![FitMatch CI](https://github.com/Chetan-code-lrca/Fit-Match_AI/actions/workflows/ci.yml/badge.svg)](https://github.com/Chetan-code-lrca/Fit-Match_AI/actions/workflows/ci.yml)
-
 # FitMatch AI
 
-FitMatch AI is a Next.js app for building outfit suggestions from a wardrobe. It includes a visual wardrobe flow, outfit scoring, an Outfit of the Day view, and a simple stylist chat.
+FitMatch AI is a wardrobe intelligence app built with Next.js. It helps people organise clothes they already own, explore combinations for different occasions, and understand the signals behind each outfit suggestion.
 
-The recommendation engine is local and rule-based. An optional OpenAI integration can rewrite the explanation shown with generated outfits.
+## Product direction
 
-## Features
+FitMatch is designed around making an existing wardrobe more useful — not turning every styling interaction into a shopping recommendation.
 
-- Wardrobe dashboard with sample clothing data
-- Upload flow for JPG, PNG, and WEBP images
-- Client-side dominant-color extraction for uploaded images
-- Optional background removal before saving an item
-- Outfit suggestions for campus, travel, smart-casual, streetwear, and night-out
-- Outfit scoring for color harmony, aesthetic fit, occasion match, and confidence
-- Outfit of the Day
-- Rule-based stylist chat
-- Optional OpenAI-generated styling explanations
+The product focuses on four ideas:
 
-## How it works
+- **Wardrobe-first styling:** outfit suggestions use saved wardrobe pieces when available.
+- **Explainable matching:** every combination is ranked using visible colour, style, occasion and versatility signals.
+- **Occasion-led discovery:** explore a closet for campus, smart casual, streetwear, travel and evening plans.
+- **Intentional wardrobe building:** understand category coverage and the possible combinations already available before buying more.
 
-The main styling logic lives in `src/lib/style-engine.ts`.
+## Current features
 
-It scores clothing combinations using the color palette, item category, style, occasion tags, and the local style profile. The chat route uses the same rule-based engine to turn prompts such as "all-black fit", "college outfit", or "white sneakers" into recommendations.
+- Responsive landing page, navigation and wardrobe dashboard
+- Starter wardrobe preview for first-time exploration
+- JPG, PNG and WEBP clothing uploads
+- Client-side dominant-colour extraction and optional background removal
+- Wardrobe gallery grouped by clothing category
+- Outfit lab with occasion selection and optional anchor piece
+- Outfit recommendations from the saved wardrobe, with a starter-data fallback
+- Deterministic styling explanations and match breakdown
+- Stylist chat using the same wardrobe-aware recommendation engine
+- Optional OpenAI explanation enrichment when OPENAI_API_KEY is configured
 
-OpenAI is only used by `/api/generate-outfits` when `OPENAI_API_KEY` is set. The app still works without that key.
+## Matching approach
+
+The current recommendation engine is a deterministic, metadata-based heuristic — it is not a trained vision or fashion model. Its overall match score is composed of:
+
+| Signal | Weight | What it measures |
+|---|---:|---|
+| Colour harmony | 30% | Compatibility of the declared colour palettes |
+| Style coherence | 25% | Compatibility of declared style labels |
+| Occasion fit | 30% | Whether each piece is tagged for the selected occasion |
+| Versatility | 15% | How many occasions the pieces are tagged for |
+
+The score is a relative styling index, not a probability or a guarantee that an outfit will suit a person. Upload tagging still relies on the existing local image-processing and filename-based flow; it does not automatically recognise every garment attribute.
 
 ## Run locally
 
-You need Node.js and npm.
+Requirements: Node.js 20.9+ and npm.
 
-```bash
+\`\`\`bash
 git clone https://github.com/Chetan-code-lrca/Fit-Match_AI.git
 cd Fit-Match_AI
 npm ci
 npm run dev
-```
+\`\`\`
 
-Open `http://localhost:3000`.
+Open http://localhost:3000.
 
 For a production build:
 
-```bash
+\`\`\`bash
 npm run lint
 npm run build
 npm start
-```
+\`\`\`
 
 ## Environment variables
 
-Create `.env.local` in the project root.
+Create .env.local in the project root.
 
-```text
+\`\`\`text
 OPENAI_API_KEY=
-```
+\`\`\`
 
-`OPENAI_API_KEY` is optional. Keep server-side credentials out of source files and never commit `.env.local`.
+The key is optional. Without it, outfit matching and deterministic explanations continue to work. Keep secrets out of source control.
 
-The repository also contains placeholders for authentication, weather, and Cloudinary integrations, but those services are not wired into the current application flow.
+## Routes
 
-## Main routes
+| Route | Purpose |
+|---|---|
+| / | Product landing page |
+| /dashboard | Wardrobe overview and daily edit |
+| /upload | Upload and save wardrobe pieces |
+| /suggestions | Occasion and anchor-based recommendations |
+| /chat | Stylist chat |
+| /settings | Configuration and integration status |
 
-```text
-/                    Landing page
-/dashboard            Wardrobe dashboard
-/upload               Wardrobe upload
-/suggestions          Outfit recommendations
-/chat                 Stylist chat
-/login                Authentication prototype
-/settings             Profile/settings UI
-```
+## API routes
 
-The app also exposes these API routes:
+- GET /api/recommendations
+- GET /api/outfit-of-the-day
+- GET or POST /api/generate-outfits
+- POST /api/chat
+- POST /api/upload
+- GET, POST or DELETE /api/wardrobe
 
-```text
-GET  /api/recommendations
-GET  /api/outfit-of-the-day
-GET  /api/generate-outfits
-POST /api/generate-outfits
-POST /api/chat
-POST /api/upload
-GET  /api/wardrobe
-POST /api/wardrobe
-DELETE /api/wardrobe
-```
+## Important prototype limitations
 
-## Project structure
+The current storage layer is still a local filesystem prototype:
 
-```text
-src/
-├── app/
-│   ├── api/
-│   ├── chat/
-│   ├── dashboard/
-│   ├── login/
-│   ├── settings/
-│   ├── suggestions/
-│   └── upload/
-├── components/
-└── lib/
-    ├── color-extractor.ts
-    ├── fitmatch-data.ts
-    ├── style-engine.ts
-    ├── wardrobe-server.ts
-    └── wardrobe-visuals.ts
-```
+- Wardrobe metadata is stored in data/wardrobe.json.
+- Uploaded photos are written beneath public/uploads, so they are public files.
+- There is no implemented authentication or user-isolated wardrobe storage.
+- Filesystem persistence is not durable across typical serverless deployments.
+- Live weather, calendar planning, garment recognition and shopping integrations are not connected.
 
-## Deployment
+Do not deploy this version as a multi-user production wardrobe service or upload sensitive personal photos to a public deployment. A production release needs authentication, per-user database records, private object storage, access controls and deployment-specific persistent storage.
 
-FitMatch AI is a standard Next.js application and can be deployed to a Node-compatible host such as Vercel.
+## CI
 
-For Vercel:
-
-1. Import `Chetan-code-lrca/Fit-Match_AI` as a Next.js project.
-2. Use the default build settings.
-3. Add `OPENAI_API_KEY` only when OpenAI explanation generation is needed.
-4. Deploy from the `main` branch.
-
-There is one important limitation in the current prototype: wardrobe metadata is stored in `data/wardrobe.json` and uploaded images are written under `public/uploads/`. That filesystem storage is suitable for local development, but it is not durable or user-isolated storage for a serverless production deployment. A production version needs persistent object storage and a database before users rely on saved wardrobes or private images.
-
-## Uploads and privacy
-
-The upload endpoint accepts JPG, PNG, and WEBP files. Uploaded files are saved as public files by the current prototype, so do not use private personal photos on a public deployment until authentication and persistent private storage are implemented.
-
-The login screen is currently a front-end prototype. It does not authenticate a user or create a private session.
-
-## Limitations
-
-- Outfit recommendations are generated from hand-written styling rules, not a trained fashion model.
-- The stylist chat is rule-based.
-- Uploaded image tags are inferred from local image processing and filename information rather than a full clothing-recognition model.
-- Authentication is not implemented yet.
-- Wardrobe persistence is filesystem-based and not suitable for multi-user production storage.
-- Weather, calendar, shopping, voice, and other external integrations are not part of the current working flow.
+GitHub Actions runs npm ci, ESLint and a Next.js production build for pull requests into main and pushes to main.

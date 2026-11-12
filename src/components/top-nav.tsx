@@ -5,44 +5,48 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const links = [
-  { href: "/dashboard", label: "Dashboard", icon: "🏠" },
-  { href: "/upload", label: "Upload", icon: "📤" },
-  { href: "/suggestions", label: "Suggestions", icon: "👗" },
-  { href: "/chat", label: "AI Stylist", icon: "✨" },
-  { href: "/settings", label: "Settings", icon: "⚙️" },
+  { href: "/dashboard", label: "Overview", icon: "⌂" },
+  { href: "/upload", label: "My closet", icon: "▦" },
+  { href: "/suggestions", label: "Outfit lab", icon: "✳" },
+  { href: "/chat", label: "Stylist", icon: "✧" },
+  { href: "/settings", label: "Preferences", icon: "⚙" },
 ];
+
+function isActivePath(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(href + "/");
+}
 
 export function TopNav() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/10 bg-black/80 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-4 sm:px-6 lg:px-8">
-        {/* Logo */}
-        <Link
-          href="/"
-          className="flex items-center gap-3 text-sm font-semibold tracking-[0.3em] text-white"
-        >
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-white via-zinc-300 to-zinc-600 text-[11px] font-bold text-black">
+    <header className="sticky top-0 z-30 border-b border-white/[0.08] bg-[#11140f]/90 backdrop-blur-2xl">
+      <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-10">
+        <Link href="/" className="group flex min-w-0 items-center gap-3" aria-label="FitMatch AI home">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] bg-[#d3ee9c] text-sm font-black tracking-[-0.08em] text-[#182011] shadow-[0_5px_24px_rgba(211,238,156,0.12)]">
             FM
           </span>
-          <span className="hidden sm:inline">FITMATCH AI</span>
+          <span className="min-w-0">
+            <span className="block truncate text-[13px] font-bold tracking-[0.13em] text-[#f4f2e9]">FITMATCH</span>
+            <span className="mt-0.5 block text-[9px] font-medium uppercase tracking-[0.2em] text-zinc-500">Wardrobe intelligence</span>
+          </span>
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden flex-wrap items-center gap-1 md:flex">
+        <nav aria-label="Primary navigation" className="hidden items-center gap-1 rounded-full border border-white/[0.07] bg-white/[0.025] p-1 md:flex">
           {links.map((link) => {
-            const active = pathname === link.href;
+            const active = isActivePath(pathname, link.href);
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-full px-4 py-2 text-sm transition ${
-                  active
-                    ? "bg-white text-black"
-                    : "text-zinc-300 hover:bg-white/10 hover:text-white"
-                }`}
+                aria-current={active ? "page" : undefined}
+                className={
+                  "rounded-full px-4 py-2 text-xs font-medium transition " +
+                  (active
+                    ? "bg-[#d3ee9c] text-[#182011] shadow-sm"
+                    : "text-zinc-400 hover:bg-white/[0.07] hover:text-white")
+                }
               >
                 {link.label}
               </Link>
@@ -50,64 +54,57 @@ export function TopNav() {
           })}
         </nav>
 
-        {/* Right actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <Link
-            href="/login"
-            className="hidden rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white transition hover:border-white/40 hover:bg-white/10 sm:block"
+            href="/upload"
+            className="hidden items-center gap-2 rounded-full border border-[#d3ee9c]/25 bg-[#d3ee9c]/[0.08] px-4 py-2.5 text-xs font-semibold text-[#d3ee9c] transition hover:border-[#d3ee9c]/50 hover:bg-[#d3ee9c]/[0.14] sm:inline-flex"
           >
-            Login
+            <span className="text-base leading-none">+</span>
+            Add pieces
           </Link>
-
-          {/* Hamburger for mobile */}
           <button
             type="button"
-            aria-label="Toggle navigation"
-            onClick={() => setMobileOpen((prev) => !prev)}
-            className="flex h-9 w-9 flex-col items-center justify-center gap-1.5 rounded-full border border-white/15 md:hidden"
+            aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen((previous) => !previous)}
+            className="flex h-10 w-10 flex-col items-center justify-center gap-1.5 rounded-full border border-white/10 text-zinc-200 transition hover:bg-white/10 md:hidden"
           >
-            <span
-              className={`block h-0.5 w-5 rounded bg-white transition-all ${mobileOpen ? "translate-y-2 rotate-45" : ""}`}
-            />
-            <span
-              className={`block h-0.5 w-5 rounded bg-white transition-all ${mobileOpen ? "opacity-0" : ""}`}
-            />
-            <span
-              className={`block h-0.5 w-5 rounded bg-white transition-all ${mobileOpen ? "-translate-y-2 -rotate-45" : ""}`}
-            />
+            <span className={"block h-0.5 w-4 rounded bg-current transition-all " + (mobileOpen ? "translate-y-2 rotate-45" : "")} />
+            <span className={"block h-0.5 w-4 rounded bg-current transition-all " + (mobileOpen ? "opacity-0" : "")} />
+            <span className={"block h-0.5 w-4 rounded bg-current transition-all " + (mobileOpen ? "-translate-y-2 -rotate-45" : "")} />
           </button>
         </div>
       </div>
 
-      {/* Mobile dropdown */}
       {mobileOpen ? (
-        <div className="border-t border-white/10 bg-black/90 px-4 pb-4 pt-3 md:hidden">
-          <nav className="grid gap-1">
+        <div className="border-t border-white/[0.08] bg-[#11140f] px-4 pb-4 pt-3 md:hidden">
+          <nav aria-label="Mobile navigation" className="mx-auto grid max-w-[1440px] gap-1 sm:px-2">
             {links.map((link) => {
-              const active = pathname === link.href;
+              const active = isActivePath(pathname, link.href);
               return (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition ${
-                    active
-                      ? "bg-white text-black"
-                      : "text-zinc-300 hover:bg-white/10 hover:text-white"
-                  }`}
+                  aria-current={active ? "page" : undefined}
+                  className={
+                    "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition " +
+                    (active
+                      ? "bg-[#d3ee9c] font-semibold text-[#182011]"
+                      : "text-zinc-300 hover:bg-white/[0.06]")
+                  }
                 >
-                  <span>{link.icon}</span>
+                  <span className="w-5 text-center text-base" aria-hidden="true">{link.icon}</span>
                   {link.label}
                 </Link>
               );
             })}
             <Link
-              href="/login"
+              href="/upload"
               onClick={() => setMobileOpen(false)}
-              className="mt-2 flex items-center gap-3 rounded-2xl border border-white/15 px-4 py-3 text-sm text-white transition hover:bg-white/10"
+              className="mt-2 flex items-center justify-center gap-2 rounded-full bg-[#d3ee9c] px-4 py-3 text-sm font-semibold text-[#182011]"
             >
-              <span>👤</span>
-              Login
+              + Add wardrobe pieces
             </Link>
           </nav>
         </div>

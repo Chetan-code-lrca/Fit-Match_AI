@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
+import { wardrobeItems } from "@/lib/fitmatch-data";
 import { buildChatReply } from "@/lib/style-engine";
+import { readUserWardrobeItems } from "@/lib/wardrobe-server";
 
 export async function POST(request: Request) {
   let body: { prompt?: string };
@@ -11,7 +13,6 @@ export async function POST(request: Request) {
   }
 
   const prompt = body.prompt?.trim();
-
   if (!prompt) {
     return NextResponse.json(
       { message: "Prompt is required.", recommendations: [] },
@@ -19,5 +20,7 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json(buildChatReply(prompt));
+  const savedItems = readUserWardrobeItems();
+  const activeWardrobe = savedItems.length > 0 ? savedItems : wardrobeItems;
+  return NextResponse.json(buildChatReply(prompt, activeWardrobe));
 }
