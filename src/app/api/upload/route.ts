@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    await enforceUserRateLimit(auth, "uploads", 60, 10);
+    await enforceUserRateLimit(auth, "uploads", 60, 20);
     const analysis: Array<{
       fileName: string;
       storagePath: string;
