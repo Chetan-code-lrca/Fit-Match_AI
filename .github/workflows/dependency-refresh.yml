@@ -1,0 +1,69 @@
+name: Refresh patched dependencies
+
+on:
+  push:
+    branches: [feat/production-hardening-v1]
+    paths:
+      - .github/workflows/dependency-refresh.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fitmatch-dependency-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Upgrade patched Next.js and React packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Upgrade direct runtime packages to patched releases
+        run: npm install --ignore-scripts --save-exact next@16.4.6 react@19.2.9 react-dom@19.2.9 eslint-config-next@16.4.6
+
+      - name: Apply non-breaking transitive security fixes
+        run: npm audit fix --ignore-scripts
+
+      - name: Verify clean lockfile installation
+        run: npm ci --ignore-scripts
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Regression tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+      - name: Fail on high or critical dependency advisories
+        run: npm audit --audit-level=high
+
+      - name: Commit verified dependency updates
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
+        run: |
+          if git diff --quiet -- package.json package-lock.json; then
+            echo "No dependency changes were required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore(deps): upgrade patched Next.js and React releases"
+          git push origin "HEAD:${BRANCH_NAME}"
