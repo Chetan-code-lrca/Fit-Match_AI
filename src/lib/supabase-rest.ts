@@ -234,8 +234,8 @@ export async function uploadPrivateImage(auth: AuthContext, file: File): Promise
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
     throw new SupabaseRequestError("Only JPEG, PNG and WebP images are supported.", 415);
   }
-  if (file.size < 12 || file.size > 5 * 1024 * 1024) {
-    throw new SupabaseRequestError("Each image must be between 12 bytes and 5 MB.", 413);
+  if (file.size < 12 || file.size > 4 * 1024 * 1024) {
+    throw new SupabaseRequestError("Each image must be between 12 bytes and 4 MB.", 413);
   }
 
   let normalized: Awaited<ReturnType<typeof normalizeUploadedImage>>;

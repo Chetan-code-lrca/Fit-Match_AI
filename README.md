@@ -31,7 +31,7 @@ Requirements: Node.js 22.6+ and npm.
 1. Clone the repository and install dependencies with npm ci.
 2. Copy .env.example to .env.local.
 3. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.
-4. Apply both Supabase migrations in order (initial schema, then per-user API rate limits).
+4. Apply all three Supabase migrations in order (initial schema, per-user API rate limits, then the private image-size setting).
 5. Configure Supabase Auth URLs and the email confirmation template (see below).
 6. Run npm run dev.
 

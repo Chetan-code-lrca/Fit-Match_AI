@@ -12,7 +12,7 @@ Status: **Application hardening implemented; live Supabase verification required
 - [x] Private Storage uploads and expiring signed URLs.
 - [x] Runtime wardrobe adapter no longer reads the shared JSON file.
 - [x] Mutation Origin and Fetch Metadata checks.
-- [x] Upload MIME/signature checks, per-file and aggregate size limits.
+- [x] Upload MIME/signature checks, 4 MB per-image limit and one-image requests (keeps multipart payloads below Vercel's 4.5 MB function limit).
 - [x] Sharp decoding, pixel limits, orientation correction, resizing and metadata-free WebP re-encoding.
 - [x] Atomic PostgreSQL per-user API quotas for wardrobe, uploads, chat and outfit endpoints; limiter fails closed.
 - [x] Migrations define wardrobe RLS, private Storage and rate-limit RPC policies.

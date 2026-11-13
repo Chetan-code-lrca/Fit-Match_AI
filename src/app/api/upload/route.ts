@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { getAuthenticatedUser, isSameOriginMutation, SupabaseRequestError, uploadPrivateImage, enforceUserRateLimit } from "@/lib/supabase-rest";
 
 export const runtime = "nodejs";
-const MAX_FILES = 8;
-const MAX_TOTAL_SIZE = 20 * 1024 * 1024;
+const MAX_FILES = 1;
+const MAX_TOTAL_SIZE = 4 * 1024 * 1024;
 const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
 
 function inferTags(fileName: string) {
@@ -28,17 +28,17 @@ export async function POST(request: Request) {
   let formData: FormData;
   try {
     const length = Number(request.headers.get("content-length") ?? 0);
-    if (length > MAX_TOTAL_SIZE + 1024 * 1024) return NextResponse.json({ message: "Upload request is too large." }, { status: 413 });
+    if (length > MAX_TOTAL_SIZE + 64 * 1024) return NextResponse.json({ message: "Upload request is too large." }, { status: 413 });
     formData = await request.formData();
   } catch { return NextResponse.json({ message: "Invalid multipart upload." }, { status: 400 }); }
 
   const entries = formData.getAll("files");
   if (!entries.length) return NextResponse.json({ message: "At least one image is required." }, { status: 400 });
-  if (entries.length > MAX_FILES || entries.some((entry) => !(entry instanceof File))) return NextResponse.json({ message: "Upload up to eight valid images at a time." }, { status: 400 });
+  if (entries.length > MAX_FILES || entries.some((entry) => !(entry instanceof File))) return NextResponse.json({ message: "Upload one valid image per request." }, { status: 400 });
   const files = entries as File[];
-  if (files.reduce((sum, file) => sum + file.size, 0) > MAX_TOTAL_SIZE) return NextResponse.json({ message: "The combined upload limit is 20 MB." }, { status: 413 });
+  if (files.reduce((sum, file) => sum + file.size, 0) > MAX_TOTAL_SIZE) return NextResponse.json({ message: "Each request is limited to one image up to 4 MB." }, { status: 413 });
   if (files.some((file) => !allowedTypes.includes(file.type) || file.size < 12 || file.size > 5 * 1024 * 1024)) {
-    return NextResponse.json({ message: "Only JPG, PNG and WEBP images up to 5 MB each are supported." }, { status: 415 });
+    return NextResponse.json({ message: "Only JPG, PNG and WEBP images up to 4 MB are supported." }, { status: 415 });
   }
 
   try {

@@ -85,10 +85,18 @@ export function UploadStudio() {
     if (!selectedFiles) return;
 
     const nextFiles = Array.from(selectedFiles);
+    if (nextFiles.length > 8) {
+      setError("Select up to eight clothing images at a time.");
+      return;
+    }
     const invalid = nextFiles.find((file) => !uploadFormats.includes(file.type));
-
     if (invalid) {
       setError("Please upload JPG, PNG, or WEBP files only.");
+      return;
+    }
+    const oversized = nextFiles.find((file) => file.size > 4 * 1024 * 1024);
+    if (oversized) {
+      setError("Each image must be 4 MB or smaller.");
       return;
     }
 
@@ -96,68 +104,66 @@ export function UploadStudio() {
     setSaveError("");
     setAnalysis([]);
     setSavedIds(new Set());
-
     revokeOldPreviews();
+
     const previews: UploadedFile[] = nextFiles.map((file) => ({
       file,
       previewUrl: URL.createObjectURL(file),
       extractedColors: [],
     }));
-    prevPreviewUrls.current = previews.map((p) => p.previewUrl);
+    prevPreviewUrls.current = previews.map((preview) => preview.previewUrl);
     setUploadedFiles(previews);
-
-    // Initialize save forms
-    setSaveForms(
-      nextFiles.map((file) => ({
-        name: file.name.replace(/\.[^.]+$/, "").replace(/[_-]/g, " "),
-        category: "top",
-        color: "black",
-        style: "minimal",
-        removeBackground: true,
-      })),
-    );
+    setSaveForms(nextFiles.map((file) => ({
+      name: file.name.replace(/\\.[^.]+$/, "").replace(/[_-]/g, " "),
+      category: "top",
+      color: "black",
+      style: "minimal",
+      removeBackground: true,
+    })));
 
     setExtractingColors(true);
     const withColors: UploadedFile[] = await Promise.all(
-      previews.map(async (entry) => {
-        const colors = await extractDominantColors(entry.file, 5);
-        return { ...entry, extractedColors: colors };
-      }),
+      previews.map(async (entry) => ({
+        ...entry,
+        extractedColors: await extractDominantColors(entry.file, 5),
+      })),
     );
     setExtractingColors(false);
     setUploadedFiles(withColors);
 
     setPending(true);
-    const formData = new FormData();
-    nextFiles.forEach((file) => formData.append("files", file));
-
     try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const uploadedEntries: UploadAnalysis[] = [];
 
-      if (!response.ok) throw new Error("Upload analysis failed.");
-
-      const payload = (await response.json()) as { analysis: UploadAnalysis[] };
-      const merged = payload.analysis.map((entry, i) => ({
-        ...entry,
-        dominantColors:
-          withColors[i]?.extractedColors.length
-            ? withColors[i].extractedColors
+      // Each image is sent as a separate small request. This stays below
+      // serverless request-body caps while preserving multi-select UX.
+      for (const [index, file] of nextFiles.entries()) {
+        const formData = new FormData();
+        formData.append("files", file);
+        const response = await fetch("/api/upload", { method: "POST", body: formData });
+        const payload = await response.json().catch(() => ({})) as {
+          analysis?: UploadAnalysis[];
+          message?: string;
+        };
+        if (!response.ok) {
+          throw new Error(payload.message ?? ("Upload analysis failed for " + file.name + "."));
+        }
+        const entry = payload.analysis?.[0];
+        if (!entry) throw new Error("The image service returned an incomplete result.");
+        uploadedEntries.push({
+          ...entry,
+          dominantColors: withColors[index]?.extractedColors.length
+            ? withColors[index].extractedColors
             : entry.dominantColors,
-        colorNames: withColors[i]?.extractedColors.map(getColorName) ?? [],
-      }));
-      setAnalysis(merged);
+          colorNames: withColors[index]?.extractedColors.map(getColorName) ?? [],
+        });
+      }
 
-      // Pre-fill color from extracted colors
-      setSaveForms((prev) =>
-        prev.map((form, i) => ({
-          ...form,
-          color:
-            merged[i]?.colorNames[0]?.toLowerCase() ?? form.color,
-        })),
-      );
+      setAnalysis(uploadedEntries);
+      setSaveForms((prev) => prev.map((form, index) => ({
+        ...form,
+        color: uploadedEntries[index]?.colorNames[0]?.toLowerCase() ?? form.color,
+      })));
     } catch (requestError) {
       setError(
         requestError instanceof Error
