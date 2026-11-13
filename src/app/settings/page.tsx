@@ -1,12 +1,12 @@
 import { AppShell } from "@/components/app-shell";
+import { DeleteAccountButton } from "@/components/delete-account-button";
 import { integrationStatus } from "@/lib/config";
-import { wardrobeItems as starterWardrobe } from "@/lib/fitmatch-data";
 import { readUserWardrobeItems } from "@/lib/wardrobe-server";
 import { resolveColorHex } from "@/lib/wardrobe-visuals";
 
 const connectionLabels: Record<keyof typeof integrationStatus, string> = {
-  googleAuth: "Google authentication",
-  emailAuth: "Session authentication",
+  googleAuth: "Google OAuth provider",
+  emailAuth: "Supabase email authentication",
   cloudinary: "Cloud image storage",
   openAi: "OpenAI explanations",
   weather: "Weather context",
@@ -18,10 +18,6 @@ const nextCapabilities = [
     description: "Record what you wear and understand cost-per-wear and underused pieces.",
   },
   {
-    title: "Private accounts and storage",
-    description: "User-isolated wardrobes, private photo storage and durable database persistence.",
-  },
-  {
     title: "Weather-aware outfit planning",
     description: "Use a real forecast to adjust layers and outfit suggestions for the day.",
   },
@@ -31,9 +27,9 @@ const nextCapabilities = [
   },
 ];
 
-export default function SettingsPage() {
-  const savedItems = readUserWardrobeItems();
-  const wardrobe = savedItems.length > 0 ? savedItems : starterWardrobe;
+export default async function SettingsPage() {
+  const savedItems = await readUserWardrobeItems();
+  const wardrobe = savedItems;
   const colors = Array.from(new Set(wardrobe.map((item) => item.color)));
   const connectedCount = Object.values(integrationStatus).filter(Boolean).length;
 
@@ -41,7 +37,7 @@ export default function SettingsPage() {
     <AppShell
       eyebrow="Workspace configuration"
       title="Know what powers your style profile."
-      description="Review the wardrobe data FitMatch is using, check service configuration and see which capabilities are ready versus still in development."
+      description="Review your saved wardrobe, connected services and privacy controls."
     >
       <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-[26px] border border-white/[0.08] bg-[#191d17] p-6 sm:p-7">
@@ -127,10 +123,22 @@ export default function SettingsPage() {
         </div>
       </section>
 
+      <section className="grid gap-4 rounded-[26px] border border-white/[0.08] bg-[#191d17] p-6 sm:grid-cols-[1fr_auto] sm:items-center sm:p-7">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">Your data</p>
+          <h2 className="mt-2 text-xl font-semibold text-[#f4f2e9]">Export or delete your account.</h2>
+          <p className="mt-2 max-w-2xl text-xs leading-5 text-zinc-500">Download a JSON copy of your wardrobe metadata and temporary private image links. Account deletion removes your account, wardrobe records and private clothing photos after the Supabase deletion function is deployed.</p>
+          <a href="/api/account/export" className="mt-4 inline-flex rounded-full border border-[#d3ee9c]/25 px-4 py-2.5 text-xs font-semibold text-[#d3ee9c] transition hover:bg-[#d3ee9c]/[0.08]">Download my data</a>
+        </div>
+        <div className="sm:justify-self-end">
+          <DeleteAccountButton />
+        </div>
+      </section>
+
       <section className="rounded-[22px] border border-amber-200/10 bg-amber-100/[0.025] p-5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-100/70">Prototype data notice</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-100/70">Privacy and AI notice</p>
         <p className="mt-2 max-w-4xl text-xs leading-6 text-zinc-500">
-          The current wardrobe store is a local JSON file and uploaded images are saved under the public uploads directory. Authentication and private per-user storage are not implemented yet. Do not use this deployment for sensitive personal photos or as a multi-user production service.
+          Wardrobe rows are scoped to your account by database Row Level Security. Uploaded photos use a private bucket and expiring signed URLs. A live project migration and two-account staging verification are still required before public launch.
         </p>
       </section>
     </AppShell>

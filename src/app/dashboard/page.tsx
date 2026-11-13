@@ -24,8 +24,8 @@ const categoryLabels = [
   { key: "accessory", label: "Accessories", color: "#d5a9a2" },
 ] as const;
 
-export default function DashboardPage() {
-  const savedItems = readUserWardrobeItems();
+export default async function DashboardPage() {
+  const savedItems = await readUserWardrobeItems();
   const activeWardrobe = savedItems.length > 0 ? savedItems : wardrobeItems;
   const outfitOfTheDay = buildOutfitOfTheDay(activeWardrobe);
   const topPicks = buildRecommendations(

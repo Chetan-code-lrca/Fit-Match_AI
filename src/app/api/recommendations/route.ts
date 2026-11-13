@@ -1,34 +1,42 @@
 import { NextResponse } from "next/server";
 
 import { wardrobeItems, type WardrobeOccasion } from "@/lib/fitmatch-data";
+import {
+  enforceUserRateLimit,
+  getAuthenticatedUser,
+  listWardrobeItems,
+  supabaseApiError,
+} from "@/lib/supabase-rest";
 import { buildRecommendations } from "@/lib/style-engine";
-import { readUserWardrobeItems } from "@/lib/wardrobe-server";
 
-const validOccasions: WardrobeOccasion[] = [
-  "campus",
-  "travel",
-  "smart-casual",
-  "streetwear",
-  "night-out",
-];
+const validOccasions: WardrobeOccasion[] = ["campus", "travel", "smart-casual", "streetwear", "night-out"];
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const requestedOccasion = searchParams.get("occasion");
-  const occasion = validOccasions.includes(requestedOccasion as WardrobeOccasion)
-    ? (requestedOccasion as WardrobeOccasion)
-    : "campus";
+  try {
+    const auth = await getAuthenticatedUser();
+    if (!auth) return NextResponse.json({ message: "Authentication required." }, { status: 401 });
 
-  const savedItems = readUserWardrobeItems();
-  const activeWardrobe = savedItems.length > 0 ? savedItems : wardrobeItems;
-  const requestedItem = searchParams.get("item") ?? activeWardrobe[0]?.id;
-  const item = requestedItem && activeWardrobe.some((entry) => entry.id === requestedItem)
-    ? requestedItem
-    : activeWardrobe[0]?.id;
+    await enforceUserRateLimit(auth, "recommendations", 60, 60);
+    const saved = await listWardrobeItems(auth);
+    const wardrobe = saved.length ? saved : wardrobeItems;
+    const { searchParams } = new URL(request.url);
+    const requested = searchParams.get("occasion");
+    const occasion = validOccasions.includes(requested as WardrobeOccasion)
+      ? requested as WardrobeOccasion
+      : "campus";
+    const selected = searchParams.get("item");
+    const item = selected && wardrobe.some((entry) => entry.id === selected)
+      ? selected
+      : wardrobe[0]?.id;
 
-  return NextResponse.json({
-    recommendations: item ? buildRecommendations(item, occasion, activeWardrobe) : [],
-  });
+    return NextResponse.json(
+      { recommendations: item ? buildRecommendations(item, occasion, wardrobe) : [] },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  } catch (error) {
+    return supabaseApiError(error, "Recommendations are temporarily unavailable.");
+  }
 }

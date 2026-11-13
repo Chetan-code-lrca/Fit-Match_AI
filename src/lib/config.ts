@@ -2,7 +2,9 @@ export const integrationStatus = {
   googleAuth:
     Boolean(process.env.GOOGLE_CLIENT_ID) &&
     Boolean(process.env.GOOGLE_CLIENT_SECRET),
-  emailAuth: Boolean(process.env.AUTH_SECRET),
+  emailAuth:
+    Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL) &&
+    Boolean(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY),
   cloudinary:
     Boolean(process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME) &&
     Boolean(process.env.CLOUDINARY_API_KEY) &&
