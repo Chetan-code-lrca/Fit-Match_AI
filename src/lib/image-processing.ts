@@ -1,5 +1,5 @@
 import sharp, { type Metadata } from "sharp";
-import { isAllowedImageSignature } from "@/lib/image-signature";
+import { isAllowedImageSignature } from "./image-signature.ts";
 
 const MAX_INPUT_PIXELS = 20_000_000;
 const MAX_INPUT_SIDE = 10_000;
