@@ -40,23 +40,36 @@ Deno.serve(async (request: Request) => {
     // The user id is derived from the verified JWT, never from a request field.
     const storage = adminClient.storage.from("wardrobe-private");
     const limit = 500;
-    for (let offset = 0; offset < 10_000; offset += limit) {
+    let allImagesRemoved = false;
+
+    // Always read from offset 0 because removing a page shifts the remaining list.
+    for (let batch = 0; batch < 200; batch += 1) {
       const { data: objects, error: listError } = await storage.list(user.id, {
         limit,
-        offset,
+        offset: 0,
         sortBy: { column: "name", order: "asc" },
       });
       if (listError) return jsonError("Unable to prepare private image deletion.", 502);
+      if (!objects || objects.length === 0) {
+        allImagesRemoved = true;
+        break;
+      }
 
-      const paths = (objects ?? [])
+      const paths = objects
         .filter((object) => Boolean(object.id) && Boolean(object.name))
         .map((object) => user.id + "/" + object.name);
 
-      if (paths.length) {
-        const { error: removeError } = await storage.remove(paths);
-        if (removeError) return jsonError("Unable to remove all private wardrobe images. Please retry.", 502);
+      // Unexpected nested folders are treated as a hard failure, never silently skipped.
+      if (paths.length === 0) {
+        return jsonError("Unexpected private storage layout. Account deletion was stopped.", 409);
       }
-      if (!objects || objects.length < limit) break;
+
+      const { error: removeError } = await storage.remove(paths);
+      if (removeError) return jsonError("Unable to remove all private wardrobe images. Please retry.", 502);
+    }
+
+    if (!allImagesRemoved) {
+      return jsonError("Too many private images to delete in one request. Contact support.", 409);
     }
 
     const { error: deleteError } = await adminClient.auth.admin.deleteUser(user.id);
