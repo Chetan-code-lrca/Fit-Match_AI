@@ -114,7 +114,7 @@ export function UploadStudio() {
     prevPreviewUrls.current = previews.map((preview) => preview.previewUrl);
     setUploadedFiles(previews);
     setSaveForms(nextFiles.map((file) => ({
-      name: file.name.replace(/\\.[^.]+$/, "").replace(/[_-]/g, " "),
+      name: file.name.replace(/\.[^.]+$/, "").replace(/[_-]/g, " "),
       category: "top",
       color: "black",
       style: "minimal",

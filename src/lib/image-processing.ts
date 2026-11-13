@@ -12,8 +12,11 @@ const expectedFormats: Record<string, "jpeg" | "png" | "webp"> = {
 };
 
 export class ImageProcessingError extends Error {
-  constructor(message: string, readonly status: 413 | 415) {
+  readonly status: 413 | 415;
+
+  constructor(message: string, status: 413 | 415) {
     super(message);
+    this.status = status;
     this.name = "ImageProcessingError";
   }
 }
