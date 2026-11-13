@@ -1,113 +1,59 @@
-import fs from "fs/promises";
-import { randomUUID } from "crypto";
-import path from "path";
-
 import { NextResponse } from "next/server";
-
-import { uploadFormats } from "@/lib/fitmatch-data";
-import { rejectUnsafeProductionStorage } from "@/lib/production-safety";
-import { isAllowedImageSignature } from "@/lib/image-signature";
+import { getAuthenticatedUser, isSameOriginMutation, SupabaseRequestError, uploadPrivateImage } from "@/lib/supabase-rest";
 
 export const runtime = "nodejs";
-
-const UPLOADS_DIR = path.join(process.cwd(), "public", "uploads");
 const MAX_FILES = 8;
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_TOTAL_SIZE = 20 * 1024 * 1024;
-
-const extensionByMime: Record<string, ".jpg" | ".png" | ".webp"> = {
-  "image/jpeg": ".jpg",
-  "image/png": ".png",
-  "image/webp": ".webp",
-};
-
-async function ensureUploadsDir() {
-  await fs.mkdir(UPLOADS_DIR, { recursive: true });
-}
-
-function sanitizeFileName(name: string): string {
-  const sanitized = name.replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase();
-  return sanitized.slice(0, 80) || "wardrobe-item";
-}
+const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
 
 function inferTags(fileName: string) {
-  const normalized = fileName.toLowerCase();
-  const tokens = normalized.split(/[^a-z0-9]+/).filter(Boolean);
-  const hasToken = (token: string) => tokens.includes(token);
-  const tags = [
-    hasToken("hoodie") ? "hoodie layer" : hasToken("jacket") ? "outer layer" : "uploaded outfit",
-    hasToken("black") ? "black top" : hasToken("white") ? "white accent" : "neutral palette",
-    hasToken("shoe") || hasToken("sneaker") ? "sneaker styling" : hasToken("travel") ? "travel ready" : "smart casual ready",
-  ];
-
+  const tokens = fileName.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  const has = (token: string) => tokens.includes(token);
   return {
-    dominantColors: hasToken("black") ? ["black", "charcoal", "white"] : ["cream", "olive", "charcoal"],
-    tags,
-    occasionHint: hasToken("travel") ? "Travel-ready" : "Campus + smart-casual",
+    dominantColors: has("black") ? ["black", "charcoal", "white"] : ["cream", "olive", "charcoal"],
+    tags: [
+      has("hoodie") ? "hoodie layer" : has("jacket") ? "outer layer" : "uploaded outfit",
+      has("black") ? "black accent" : has("white") ? "white accent" : "neutral palette",
+      has("shoe") || has("sneaker") ? "sneaker styling" : has("travel") ? "travel ready" : "smart casual ready",
+    ],
+    occasionHint: has("travel") ? "Travel-ready" : "Campus + smart-casual",
   };
 }
 
 export async function POST(request: Request) {
-  const blocked = rejectUnsafeProductionStorage();
-  if (blocked) return blocked;
+  if (!isSameOriginMutation(request)) return NextResponse.json({ message: "Cross-origin request blocked." }, { status: 403 });
+  const auth = await getAuthenticatedUser();
+  if (!auth) return NextResponse.json({ message: "Authentication required." }, { status: 401 });
 
   let formData: FormData;
   try {
-    const contentLength = Number(request.headers.get("content-length") ?? 0);
-    if (contentLength > MAX_TOTAL_SIZE + 1024 * 1024) {
-      return NextResponse.json({ message: "Upload request is too large." }, { status: 413 });
-    }
+    const length = Number(request.headers.get("content-length") ?? 0);
+    if (length > MAX_TOTAL_SIZE + 1024 * 1024) return NextResponse.json({ message: "Upload request is too large." }, { status: 413 });
     formData = await request.formData();
-  } catch {
-    return NextResponse.json({ message: "Invalid multipart upload." }, { status: 400 });
+  } catch { return NextResponse.json({ message: "Invalid multipart upload." }, { status: 400 }); }
+
+  const entries = formData.getAll("files");
+  if (!entries.length) return NextResponse.json({ message: "At least one image is required." }, { status: 400 });
+  if (entries.length > MAX_FILES || entries.some((entry) => !(entry instanceof File))) return NextResponse.json({ message: "Upload up to eight valid images at a time." }, { status: 400 });
+  const files = entries as File[];
+  if (files.reduce((sum, file) => sum + file.size, 0) > MAX_TOTAL_SIZE) return NextResponse.json({ message: "The combined upload limit is 20 MB." }, { status: 413 });
+  if (files.some((file) => !allowedTypes.includes(file.type) || file.size < 12 || file.size > 5 * 1024 * 1024)) {
+    return NextResponse.json({ message: "Only JPG, PNG and WEBP images up to 5 MB each are supported." }, { status: 415 });
   }
 
-  const files = formData.getAll("files");
-  if (files.length === 0) {
-    return NextResponse.json({ message: "At least one image is required." }, { status: 400 });
-  }
-  if (files.length > MAX_FILES) {
-    return NextResponse.json({ message: `You can upload up to ${MAX_FILES} images at a time.` }, { status: 400 });
-  }
-  if (files.some((entry) => !(entry instanceof File))) {
-    return NextResponse.json({ message: "Invalid upload." }, { status: 400 });
-  }
-
-  const typedFiles = files as File[];
-  const totalSize = typedFiles.reduce((sum, file) => sum + file.size, 0);
-  if (totalSize > MAX_TOTAL_SIZE) {
-    return NextResponse.json({ message: "The combined upload limit is 20 MB." }, { status: 413 });
-  }
-
-  const validated: Array<{ file: File; buffer: Buffer }> = [];
-  for (const file of typedFiles) {
-    if (!uploadFormats.includes(file.type) || !extensionByMime[file.type]) {
-      return NextResponse.json({ message: "Only JPG, PNG, and WEBP uploads are supported." }, { status: 400 });
-    }
-    if (file.size < 12 || file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ message: "Each image must be between 12 bytes and 5 MB." }, { status: 400 });
-    }
-
-    const buffer = Buffer.from(await file.arrayBuffer());
-    if (!isAllowedImageSignature(buffer, file.type)) {
-      return NextResponse.json({ message: "The file contents do not match the declared image type." }, { status: 415 });
-    }
-    validated.push({ file, buffer });
-  }
-
-  await ensureUploadsDir();
-  const analysis = await Promise.all(validated.map(async ({ file, buffer }, index) => {
-    const ext = extensionByMime[file.type];
-    const base = sanitizeFileName(path.basename(file.name, path.extname(file.name)));
-    const savedName = `${base}_${randomUUID()}_${index}${ext}`;
-    await fs.writeFile(path.join(UPLOADS_DIR, savedName), buffer, { flag: "wx", mode: 0o600 });
-
-    return {
+  try {
+    const analysis = await Promise.all(files.map(async (file) => ({
       fileName: file.name.slice(0, 255),
-      imageUrl: `/uploads/${savedName}`,
+      ...(await uploadPrivateImage(auth, file)),
       ...inferTags(file.name),
-    };
-  }));
-
-  return NextResponse.json({ analysis }, { headers: { "Cache-Control": "no-store" } });
+    })));
+    return NextResponse.json({ analysis }, { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    const status = error instanceof SupabaseRequestError ? error.status : 500;
+    const message = status === 503 ? (error instanceof Error ? error.message : "Storage is not configured.")
+      : status === 403 ? "Image storage access was denied."
+      : status === 415 || status === 413 ? (error instanceof Error ? error.message : "Unsupported image.")
+      : "Unable to store these images securely.";
+    return NextResponse.json({ message }, { status: status >= 500 && status !== 503 ? 502 : status });
+  }
 }
