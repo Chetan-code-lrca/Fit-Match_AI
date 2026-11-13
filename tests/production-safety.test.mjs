@@ -58,3 +58,20 @@ test("authenticated API endpoints fail closed if the PostgreSQL rate-limit RPC i
   assert.match(source, /Rate-limit protection is unavailable/);
   assert.match(source, /status === 429/);
 });
+
+test("account deletion is identity-bound and delegates privileged work to Supabase Edge Functions", async () => {
+  const source = await readFile(new URL("../src/lib/supabase-rest.ts", import.meta.url), "utf8");
+  const edge = await readFile(new URL("../supabase/functions/delete-account/index.ts", import.meta.url), "utf8");
+  assert.match(source, /functions\/v1\/delete-account/);
+  assert.match(edge, /auth\.getUser/);
+  assert.match(edge, /auth\.admin\.deleteUser/);
+  assert.match(edge, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(edge, /storage\.remove/);
+  assert.doesNotMatch(edge, /body\.user_id|body\.id/);
+});
+
+test("third migration constrains private uploads to four megabytes", async () => {
+  const sql = await readFile(new URL("../supabase/migrations/202611130003_storage_upload_limit.sql", import.meta.url), "utf8");
+  assert.match(sql, /file_size_limit = 4194304/);
+  assert.match(sql, /where id = 'wardrobe-private'/);
+});

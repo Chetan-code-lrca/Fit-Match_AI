@@ -17,7 +17,7 @@ FitMatch AI is a wardrobe intelligence application built with Next.js. It helps 
 - Wardrobe records stored in PostgreSQL and restricted by Row Level Security.
 - Private clothing image uploads stored in Supabase Storage; Sharp decodes and re-encodes images to metadata-free WebP.
 - Expiring signed URLs for private image access.
-- Occasion-led outfit recommendations, daily edit and stylist chat.
+- Occasion-led outfit recommendations, daily edit and stylist chat.\n- Authenticated wardrobe JSON export and self-service account deletion via Supabase Edge Function.\n- A plain-language privacy notice draft at /privacy.
 - Optional OpenAI explanation enrichment.
 
 ## Matching approach
@@ -57,7 +57,7 @@ Run npm run lint, npm run typecheck, npm test and npm run build. The npm run che
 ## API
 
 - GET /api/health — non-sensitive liveness endpoint.
-- GET /api/auth/session
+- GET /api/account/export, POST /api/account/delete\n- GET /api/auth/session
 - POST /api/auth/sign-in, POST /api/auth/sign-up, POST /api/auth/sign-out
 - GET|POST|DELETE /api/wardrobe
 - POST /api/upload
@@ -68,4 +68,4 @@ Run npm run lint, npm run typecheck, npm test and npm run build. The npm run che
 
 The code path for Auth, PostgreSQL access, RLS-owned wardrobe records and private image storage is implemented. **Public production approval is still blocked** until the migration is applied to a real Supabase project, email delivery is configured, the migrations are applied and verified in a live Supabase project, unauthenticated auth traffic is throttled at the edge, monitoring/backups are configured, and two-account isolation is verified in staging.
 
-See SECURITY.md and the production readiness checklist. Do not remove release checks or deploy with missing Supabase settings as a workaround.
+See SECURITY.md, the production readiness checklist and the privacy notice at /privacy. Do not remove release checks or deploy with missing Supabase settings as a workaround.

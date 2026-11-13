@@ -17,7 +17,7 @@ Status: **Application hardening implemented; live Supabase verification required
 - [x] Atomic PostgreSQL per-user API quotas for wardrobe, uploads, chat and outfit endpoints; limiter fails closed.
 - [x] Migrations define wardrobe RLS, private Storage and rate-limit RPC policies.
 - [ ] Apply both migrations to a live Supabase project and verify SQL grants/RLS/RPC execution.
-- [ ] Configure Supabase Auth Site URL, redirect URLs, confirmation template and SMTP.
+- [ ] Deploy the delete-account Edge Function and set SUPABASE_SERVICE_ROLE_KEY as a Supabase Function secret only (never in Next.js/browser variables).\n- [ ] Configure Supabase Auth Site URL, redirect URLs, confirmation template and SMTP.
 - [ ] Configure encrypted Supabase environment variables in the hosting provider.
 - [ ] Configure Supabase Auth abuse limits and edge/IP throttling for unauthenticated sign-up/sign-in traffic.
 - [ ] Verify session refresh, cookie and CSRF behaviour on the real production domain.
@@ -48,11 +48,11 @@ Status: **Application hardening implemented; live Supabase verification required
 1. Create a Supabase project.
 2. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to local .env.local and encrypted hosting settings.
 3. Apply both SQL migrations in order: 202611130001_initial_schema.sql, then 202611130002_user_rate_limits.sql.
-4. In Auth URL Configuration, set the Site URL to your canonical app URL and add /auth/confirm as an allowed redirect.
-5. Configure the email confirmation template to link to {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email.
-6. Enable email/password authentication, configure custom SMTP and set appropriate Supabase Auth rate limits before public launch.
-7. Run sign-up, confirmation, sign-in, sign-out and refresh-token checks.
-8. Run the two-account isolation test and backup-restore drill in staging.
+6. In Auth URL Configuration, set the Site URL to your canonical app URL and add /auth/confirm as an allowed redirect.
+7. Configure the email confirmation template to link to {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email.
+8. Enable email/password authentication, configure custom SMTP and set appropriate Supabase Auth rate limits before public launch.
+9. Run sign-up, confirmation, sign-in, sign-out, data export and account deletion checks.
+10. Run the two-account isolation test and backup-restore drill in staging.
 
 ## Staging acceptance test
 

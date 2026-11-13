@@ -12,7 +12,7 @@ FitMatch uses Supabase Auth, PostgreSQL Row Level Security and a private Storage
 - Private image reads use expiring signed URLs.
 - Uploads enforce file signatures, MIME and size limits; Sharp decodes, auto-orients, resizes and re-encodes to metadata-free WebP with a 20-megapixel input ceiling.
 - Mutating endpoints reject cross-origin requests.
-- Authenticated API endpoints use atomic PostgreSQL per-user rate-limit windows; the application fails closed if the limiter cannot run.
+- Authenticated API endpoints use atomic PostgreSQL per-user rate-limit windows; the application fails closed if the limiter cannot run.\n- Account export is authenticated and rate-limited. Account deletion verifies the caller's JWT in a Supabase Edge Function, removes only that user's private files, then deletes the verified account.
 - The application uses a publishable key and each user's JWT, not a service-role key.
 
 ## Required provider configuration
