@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { AccountDataActions } from "@/components/account-data-actions";
 import { AppShell } from "@/components/app-shell";
 import { getCurrentSession } from "@/lib/auth";
 import { integrationStatus } from "@/lib/config";
@@ -136,6 +137,7 @@ export default async function SettingsPage() {
           Wardrobe records are scoped to your account by database row-level security. Uploaded images are stored in a private bucket and delivered through short-lived signed URLs. Keep your account credentials private and use only images you have permission to store.
         </p>
       </section>
+          <AccountDataActions />
     </AppShell>
   );
 }

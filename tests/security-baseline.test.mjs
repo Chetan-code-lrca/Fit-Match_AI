@@ -14,6 +14,8 @@ const uploadCompleteRoute = await read("src/app/api/upload/complete/route.ts");
 const authProxy = await read("src/proxy.ts");
 const wardrobeStore = await read("src/lib/wardrobe-server.ts");
 const supabaseClient = await read("src/lib/supabase-rest.ts");
+const accountDeleteRoute = await read("src/app/api/account/route.ts");
+const accountExportRoute = await read("src/app/api/account/export/route.ts");
 
 test("accepts real JPEG, PNG and WEBP signatures", () => {
   assert.equal(hasValidImageSignature(Uint8Array.from([0xff, 0xd8, 0xff, 0x00]), "image/jpeg"), true);
@@ -68,6 +70,7 @@ test("database migration enforces account and private-object ownership", () => {
   assert.ok(migration.includes("consume_fitmatch_rate_limit"));
   assert.ok(migration.includes("public = false"));
   assert.ok(migration.includes("fitmatch_health"));
+  assert.ok(migration.includes("delete_my_fitmatch_account"));
 });
 
 test("private routes authenticate, validate and rate-limit requests", () => {
@@ -90,4 +93,9 @@ test("private routes authenticate, validate and rate-limit requests", () => {
   assert.ok(supabaseClient.includes('startsWith("sb_publishable_"'));
   assert.ok(!supabaseClient.includes("SUPABASE_SECRET_KEY"));
   assert.ok(!supabaseClient.includes("SUPABASE_SERVICE_ROLE_KEY"));
+  assert.ok(accountDeleteRoute.includes("getCurrentSession"));
+  assert.ok(accountDeleteRoute.includes("removePrivateImages"));
+  assert.ok(accountDeleteRoute.includes("delete_my_fitmatch_account"));
+  assert.ok(accountExportRoute.includes("account-export"));
+  assert.ok(accountExportRoute.includes("Cache-Control"));
 });

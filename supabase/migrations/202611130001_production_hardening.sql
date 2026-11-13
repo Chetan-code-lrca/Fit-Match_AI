@@ -100,3 +100,26 @@ returns boolean language sql stable security definer set search_path = public, p
 as $$ select true; $$;
 revoke all on function public.fitmatch_health() from public;
 grant execute on function public.fitmatch_health() to anon, authenticated;
+
+
+-- Allow a signed-in user to delete only their own Auth identity.
+-- wardrobe_items and fitmatch_rate_limits cascade from auth.users.
+create or replace function public.delete_my_fitmatch_account()
+returns boolean
+language plpgsql
+security definer
+set search_path = public, auth, pg_temp
+as $$
+declare
+  v_user_id uuid := auth.uid();
+begin
+  if v_user_id is null then
+    return false;
+  end if;
+  delete from auth.users where id = v_user_id;
+  return found;
+end;
+$$;
+
+revoke all on function public.delete_my_fitmatch_account() from public, anon;
+grant execute on function public.delete_my_fitmatch_account() to authenticated;

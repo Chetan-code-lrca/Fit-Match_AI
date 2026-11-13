@@ -96,6 +96,7 @@ Do not deploy with an unconfigured Supabase project. Private APIs fail closed wi
 - Uploads are limited by count, size and MIME; the server checks stored content type and JPEG/PNG/WEBP signatures.
 - Wardrobe writes, uploads, chat and outfit generation are database-rate-limited.
 - Personal wardrobe API responses are marked private/no-store.
+- Users can export wardrobe metadata and request permanent account deletion; images are removed before the authenticated identity is deleted.
 
 ## Routes
 
@@ -109,9 +110,12 @@ Do not deploy with an unconfigured Supabase project. Private APIs fail closed wi
 | `/chat` | Wardrobe-aware stylist |
 | `/settings` | Account wardrobe and service status |
 | `/api/health` | Database readiness probe |
+| `/api/account/export` | Download account wardrobe metadata |
+| `/api/account` | Permanently delete account and private images |
+| `/privacy`, `/terms` | Draft privacy notice and terms |
 
 ## Current release boundary
 
 The repository contains the authentication, data-isolation, private-storage, input-validation, rate-limiting and CI foundation. **A live production launch is not verified** until a real Supabase project is configured, the migration is applied, Auth email/redirect settings are completed, and two-account, storage and backup/restore tests pass.
 
-See [docs/PRODUCTION_READINESS.md](docs/PRODUCTION_READINESS.md) for remaining release gates. Outstanding work includes full image decoding/re-encoding, browser E2E tests, exception monitoring, privacy/terms review and account data export/deletion.
+See [docs/PRODUCTION_READINESS.md](docs/PRODUCTION_READINESS.md) for remaining release gates. Outstanding work includes full image decoding/re-encoding, browser E2E tests, exception monitoring, final privacy/terms legal review, and live verification of account export/deletion against Supabase.

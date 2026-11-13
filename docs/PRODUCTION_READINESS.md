@@ -35,8 +35,10 @@ This checklist separates repository implementation from external configuration a
 - [ ] Add image decoding/re-encoding and pixel/dimension limits. Signature checks are an initial file-type filter, not full image sanitisation.
 - [ ] Add browser E2E tests for sign-up, protected routes, wardrobe CRUD and private uploads.
 - [ ] Add exception monitoring and alerting with PII/token scrubbing.
-- [ ] Publish privacy policy, terms, data retention and consent copy after review.
-- [ ] Add account data export and account deletion, including safe Storage-object cleanup.
+- [x] Add draft privacy and terms pages.
+- [ ] Complete legal/privacy review, add the operator's legal name and monitored support contact, define retention periods, and publish the final policy/terms.
+- [x] Add account data export and account deletion endpoints with owner-scoped Storage cleanup.
+- [ ] Verify account export and deletion with real Supabase accounts; confirm Auth deletion cascades and Storage objects are removed.
 - [ ] Add CAPTCHA and review Auth/email abuse controls before public sign-up.
 - [ ] Complete accessibility checks and test mobile layouts on real devices.
 - [ ] Define support/contact, incident response and dependency-update ownership.
