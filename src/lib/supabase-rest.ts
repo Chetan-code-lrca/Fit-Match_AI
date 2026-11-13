@@ -281,6 +281,73 @@ export async function uploadPrivateImage(auth: AuthContext, file: File): Promise
   return { storagePath, imageUrl };
 }
 
+
+export type ApiRateLimitBucket =
+  | "wardrobe_read"
+  | "wardrobe_write"
+  | "uploads"
+  | "chat"
+  | "outfits"
+  | "recommendations"
+  | "daily_outfit";
+
+/**
+ * Atomic per-account API quotas are stored in PostgreSQL. Fail closed when
+ * the limiter is unavailable so data APIs do not silently lose protection.
+ */
+export async function enforceUserRateLimit(
+  auth: AuthContext,
+  bucket: ApiRateLimitBucket,
+  windowSeconds: number,
+  maxRequests: number,
+): Promise<void> {
+  let allowed: boolean;
+  try {
+    allowed = await dataRequest<boolean>(
+      "/rest/v1/rpc/consume_api_rate_limit",
+      auth.accessToken,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          p_bucket: bucket,
+          p_window_seconds: windowSeconds,
+          p_max_requests: maxRequests,
+        }),
+      },
+    );
+  } catch {
+    throw new SupabaseRequestError("Rate-limit protection is unavailable. Please retry shortly.", 503);
+  }
+
+  if (!allowed) {
+    throw new SupabaseRequestError("Too many requests. Please wait before trying again.", 429);
+  }
+}
+
+export function supabaseApiError(
+  error: unknown,
+  fallback = "The requested service is temporarily unavailable.",
+): NextResponse {
+  const status = error instanceof SupabaseRequestError ? error.status : 500;
+  const message = status === 429
+    ? "Too many requests. Please wait before trying again."
+    : status === 503
+      ? (error instanceof Error ? error.message : "Service configuration is incomplete.")
+      : status === 401
+        ? "Your session has expired. Sign in again."
+        : fallback;
+  return NextResponse.json(
+    { message },
+    {
+      status: status === 429 || status === 401 || status === 503 ? status : 502,
+      headers: {
+        "Cache-Control": "no-store",
+        ...(status === 429 ? { "Retry-After": "60" } : {}),
+      },
+    },
+  );
+}
+
 export function isSameOriginMutation(request: Request): boolean {
   if (request.headers.get("sec-fetch-site") === "cross-site") return false;
   const origin = request.headers.get("origin");
