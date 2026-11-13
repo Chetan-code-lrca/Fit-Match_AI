@@ -1,4 +1,4 @@
-import sharp from "sharp";
+import sharp, { type Metadata } from "sharp";
 import { isAllowedImageSignature } from "@/lib/image-signature";
 
 const MAX_INPUT_PIXELS = 20_000_000;
@@ -34,7 +34,7 @@ export async function normalizeUploadedImage(
     throw new ImageProcessingError("Image content does not match a supported image type.", 415);
   }
 
-  let metadata: sharp.Metadata;
+  let metadata: Metadata;
   try {
     metadata = await sharp(input, {
       limitInputPixels: MAX_INPUT_PIXELS,

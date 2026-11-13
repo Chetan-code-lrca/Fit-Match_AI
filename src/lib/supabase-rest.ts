@@ -248,6 +248,8 @@ export async function uploadPrivateImage(auth: AuthContext, file: File): Promise
   }
 
   const storagePath = auth.user.id + "/" + randomUUID() + ".webp";
+  const uploadBody = new ArrayBuffer(normalized.buffer.byteLength);
+  new Uint8Array(uploadBody).set(normalized.buffer);
   const config = getConfig();
   const response = await fetch(
     config.url + "/storage/v1/object/" + STORAGE_BUCKET + "/" +
@@ -260,7 +262,7 @@ export async function uploadPrivateImage(auth: AuthContext, file: File): Promise
         "Content-Type": normalized.contentType,
         "x-upsert": "false",
       },
-      body: normalized.buffer,
+      body: uploadBody,
       cache: "no-store",
     },
   );
