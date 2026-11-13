@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/app-shell";
+import { DeleteAccountButton } from "@/components/delete-account-button";
 import { integrationStatus } from "@/lib/config";
 import { readUserWardrobeItems } from "@/lib/wardrobe-server";
 import { resolveColorHex } from "@/lib/wardrobe-visuals";
@@ -123,6 +124,18 @@ export default async function SettingsPage() {
               <p className="mt-2 text-xs leading-5 text-zinc-500">{item.description}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="grid gap-4 rounded-[26px] border border-white/[0.08] bg-[#191d17] p-6 sm:grid-cols-[1fr_auto] sm:items-center sm:p-7">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">Your data</p>
+          <h2 className="mt-2 text-xl font-semibold text-[#f4f2e9]">Export or delete your account.</h2>
+          <p className="mt-2 max-w-2xl text-xs leading-5 text-zinc-500">Download a JSON copy of your wardrobe metadata and temporary private image links. Account deletion removes your account, wardrobe records and private clothing photos after the Supabase deletion function is deployed.</p>
+          <a href="/api/account/export" className="mt-4 inline-flex rounded-full border border-[#d3ee9c]/25 px-4 py-2.5 text-xs font-semibold text-[#d3ee9c] transition hover:bg-[#d3ee9c]/[0.08]">Download my data</a>
+        </div>
+        <div className="sm:justify-self-end">
+          <DeleteAccountButton />
         </div>
       </section>
 
