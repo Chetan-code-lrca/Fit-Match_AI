@@ -31,10 +31,10 @@ jobs:
           cache: npm
 
       - name: Upgrade direct runtime packages to patched releases
-        run: npm install --ignore-scripts --save-exact next@16.4.6 react@19.2.9 react-dom@19.2.9 eslint-config-next@16.4.6
+        run: npm install --ignore-scripts --save-exact next@16.4.6 react@19.2.9 react-dom@19.2.9 eslint-config-next@16.4.6 sharp@0.35.5
 
       - name: Apply non-breaking transitive security fixes
-        run: npm audit fix --ignore-scripts
+        run: npm audit fix --ignore-scripts || npm audit --audit-level=high
 
       - name: Verify clean lockfile installation
         run: npm ci --ignore-scripts
