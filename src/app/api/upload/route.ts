@@ -1,113 +1,60 @@
-import fs from "fs/promises";
-import { randomUUID } from "crypto";
-import path from "path";
-
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 
+import { getCurrentSession, isSameOriginMutation } from "@/lib/auth";
+import { readLimitedJson } from "@/lib/http-validation";
 import { uploadFormats } from "@/lib/fitmatch-data";
+import { createPrivateUploadUrl, consumeRateLimit } from "@/lib/supabase-rest";
 
-const UPLOADS_DIR = path.join(process.cwd(), "public", "uploads");
+export const dynamic = "force-dynamic";
 const MAX_FILES = 8;
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
-
-const extensionByMime: Record<string, ".jpg" | ".png" | ".webp"> = {
-  "image/jpeg": ".jpg",
-  "image/png": ".png",
-  "image/webp": ".webp",
+const extensionByMime: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
 };
-
-async function ensureUploadsDir() {
-  await fs.mkdir(UPLOADS_DIR, { recursive: true });
-}
-
-function sanitizeFileName(name: string): string {
-  const sanitized = name.replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase();
-  return sanitized.slice(0, 80) || "wardrobe-item";
-}
-
-function inferTags(fileName: string) {
-  const normalized = fileName.toLowerCase();
-  const tokens = normalized.split(/[^a-z0-9]+/).filter(Boolean);
-  const hasToken = (token: string) => tokens.includes(token);
-  const tags = [
-    hasToken("hoodie") ? "hoodie layer" : hasToken("jacket") ? "outer layer" : "uploaded outfit",
-    hasToken("black")
-      ? "black top"
-      : hasToken("white")
-        ? "white accent"
-        : "neutral palette",
-    hasToken("shoe") || hasToken("sneaker")
-      ? "sneaker styling"
-      : hasToken("travel")
-        ? "travel ready"
-        : "smart casual ready",
-  ];
-
-  return {
-    dominantColors: hasToken("black")
-      ? ["black", "charcoal", "white"]
-      : ["cream", "olive", "charcoal"],
-    tags,
-    occasionHint: hasToken("travel") ? "Travel-ready" : "Campus + smart-casual",
-  };
+type UploadRequestFile = { name?: string; type?: string; size?: number };
+function safeFileName(value: string) {
+  return value.replace(/[^a-zA-Z0-9._ -]/g, "").slice(0, 100) || "wardrobe-image";
 }
 
 export async function POST(request: Request) {
-  const formData = await request.formData();
-  const files = formData.getAll("files");
-
-  if (files.length === 0) {
-    return NextResponse.json({ message: "At least one image is required." }, { status: 400 });
-  }
-
-  if (files.length > MAX_FILES) {
+  if (!isSameOriginMutation(request)) return NextResponse.json({ message: "Cross-origin request rejected." }, { status: 403 });
+  const session = await getCurrentSession();
+  if (!session) return NextResponse.json({ message: "Authentication required." }, { status: 401 });
+  const parsed = await readLimitedJson<{ files?: UploadRequestFile[] }>(request, 16_000);
+  if (!parsed.ok) {
     return NextResponse.json(
-      { message: `You can upload up to ${MAX_FILES} images at a time.` },
-      { status: 400 },
+      { message: parsed.reason === "too_large" ? "Upload metadata is too large." : "Invalid upload metadata." },
+      { status: parsed.reason === "too_large" ? 413 : 400 },
     );
   }
-
-  const invalidEntry = files.find((entry) => !(entry instanceof File));
-  if (invalidEntry) {
-    return NextResponse.json({ message: "Invalid upload." }, { status: 400 });
+  const entries = parsed.data.files;
+  if (!Array.isArray(entries) || entries.length < 1 || entries.length > MAX_FILES) {
+    return NextResponse.json({ message: "Select between 1 and 8 images." }, { status: 400 });
   }
-
-  for (const entry of files) {
-    const file = entry as File;
-    if (!uploadFormats.includes(file.type) || !extensionByMime[file.type]) {
-      return NextResponse.json(
-        { message: "Only JPG, PNG, and WEBP uploads are supported." },
-        { status: 400 },
-      );
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { message: "Each image must be 5 MB or smaller." },
-        { status: 400 },
-      );
-    }
+  const files = entries.map((file) => ({
+    name: typeof file.name === "string" ? safeFileName(file.name) : "",
+    type: typeof file.type === "string" ? file.type : "",
+    size: typeof file.size === "number" ? file.size : 0,
+  }));
+  if (files.some((file) =>
+    !file.name || !uploadFormats.includes(file.type) || !extensionByMime[file.type] ||
+    !Number.isInteger(file.size) || file.size < 1 || file.size > MAX_FILE_SIZE
+  )) {
+    return NextResponse.json({ message: "Each image must be JPG, PNG or WEBP and no larger than 5 MB." }, { status: 400 });
   }
-
-  await ensureUploadsDir();
-
-  const analysis = await Promise.all(
-    files.map(async (entry, index) => {
-      const file = entry as File;
-      const ext = extensionByMime[file.type];
-      const base = sanitizeFileName(path.basename(file.name, path.extname(file.name)));
-      const savedName = `${base}_${randomUUID()}_${index}${ext}`;
-      const savedPath = path.join(UPLOADS_DIR, savedName);
-
-      const buffer = Buffer.from(await file.arrayBuffer());
-      await fs.writeFile(savedPath, buffer);
-
-      return {
-        fileName: file.name,
-        imageUrl: `/uploads/${savedName}`,
-        ...inferTags(file.name),
-      };
-    }),
-  );
-
-  return NextResponse.json({ analysis });
+  try {
+    const allowed = await consumeRateLimit(session.accessToken, "wardrobe-upload", 20, 3600);
+    if (!allowed) return NextResponse.json({ message: "Upload limit reached. Try again later." }, { status: 429 });
+    const uploads = await Promise.all(files.map(async (file) => {
+      const imageUrl = session.user.id + "/" + randomUUID() + "." + extensionByMime[file.type];
+      const uploadUrl = await createPrivateUploadUrl(session.user.id, session.accessToken, imageUrl);
+      return { fileName: file.name, imageUrl, uploadUrl, mimeType: file.type, size: file.size };
+    }));
+    return NextResponse.json({ uploads }, { headers: { "Cache-Control": "private, no-store" } });
+  } catch {
+    return NextResponse.json({ message: "Private upload service is unavailable. Confirm the Supabase migration and bucket policies." }, { status: 503 });
+  }
 }

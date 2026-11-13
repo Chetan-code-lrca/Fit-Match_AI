@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { getCurrentSession } from "@/lib/auth";
 
 import { AppShell } from "@/components/app-shell";
 import { FadeIn } from "@/components/fade-in";
@@ -26,7 +29,9 @@ const occasions: Array<{ value: WardrobeOccasion; label: string }> = [
 
 export default async function SuggestionsPage({ searchParams }: SuggestionsPageProps) {
   const params = (await searchParams) ?? {};
-  const savedItems = readUserWardrobeItems();
+  const session = await getCurrentSession();
+  if (!session) redirect("/login");
+  const savedItems = await readUserWardrobeItems(session.accessToken, session.user.id);
   const wardrobe = savedItems.length > 0 ? savedItems : starterWardrobe;
   const fallbackItem = wardrobe[0];
 

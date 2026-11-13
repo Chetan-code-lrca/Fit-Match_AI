@@ -1,43 +1,42 @@
-import fs from "fs";
-import path from "path";
-
 import type { WardrobeItem } from "@/lib/fitmatch-data";
+import { databaseRequest, removePrivateImages, signPrivateImage } from "@/lib/supabase-rest";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const WARDROBE_FILE = path.join(DATA_DIR, "wardrobe.json");
+type WardrobeRow = { id: string; item: WardrobeItem };
 
-export function readUserWardrobeItems(): WardrobeItem[] {
-  try {
-    if (!fs.existsSync(WARDROBE_FILE)) return [];
-    const raw = fs.readFileSync(WARDROBE_FILE, "utf-8").trim();
-    if (!raw || raw === "[]") return [];
-    return JSON.parse(raw) as WardrobeItem[];
-  } catch {
-    return [];
-  }
+export async function readUserWardrobeItems(accessToken: string, userId: string): Promise<WardrobeItem[]> {
+  const query = "wardrobe_items?select=id,item&user_id=eq." +
+    encodeURIComponent(userId) + "&order=created_at.desc";
+  const response = await databaseRequest(query, accessToken);
+  if (!response.ok) throw new Error("Unable to load the account wardrobe. Check the database migration.");
+  const rows = await response.json() as WardrobeRow[];
+  return Promise.all(rows.map(async ({ item }) => {
+    const safeItem = { ...item };
+    if (safeItem.imageUrl) safeItem.imageUrl = await signPrivateImage(userId, accessToken, safeItem.imageUrl);
+    if (safeItem.extractedItemImage) {
+      safeItem.extractedItemImage = await signPrivateImage(userId, accessToken, safeItem.extractedItemImage);
+    }
+    return safeItem;
+  }));
 }
 
-export function writeUserWardrobeItems(items: WardrobeItem[]): void {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  fs.writeFileSync(WARDROBE_FILE, JSON.stringify(items, null, 2));
+export async function addUserWardrobeItem(item: WardrobeItem, accessToken: string, userId: string): Promise<void> {
+  const response = await databaseRequest("wardrobe_items?on_conflict=user_id,id", accessToken, {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify([{ user_id: userId, id: item.id, item }]),
+  });
+  if (!response.ok) throw new Error("Unable to save this wardrobe item.");
 }
 
-export function addUserWardrobeItem(item: WardrobeItem): WardrobeItem[] {
-  const items = readUserWardrobeItems();
-  const existingIndex = items.findIndex((i) => i.id === item.id);
-  if (existingIndex >= 0) {
-    items[existingIndex] = item;
-  } else {
-    items.push(item);
-  }
-  writeUserWardrobeItems(items);
-  return items;
-}
-
-export function deleteUserWardrobeItem(id: string): WardrobeItem[] {
-  const items = readUserWardrobeItems().filter((i) => i.id !== id);
-  writeUserWardrobeItems(items);
-  return items;
+export async function deleteUserWardrobeItem(id: string, accessToken: string, userId: string): Promise<void> {
+  const response = await databaseRequest(
+    "wardrobe_items?select=item&user_id=eq." + encodeURIComponent(userId) + "&id=eq." + encodeURIComponent(id),
+    accessToken,
+    { method: "DELETE", headers: { Prefer: "return=representation" } },
+  );
+  if (!response.ok) throw new Error("Unable to remove this wardrobe item.");
+  const rows = await response.json() as Array<{ item: WardrobeItem }>;
+  const paths = rows.flatMap(({ item }) => [item.imageUrl, item.extractedItemImage])
+    .filter((value): value is string => Boolean(value) && value!.startsWith(userId + "/"));
+  await removePrivateImages(accessToken, paths);
 }

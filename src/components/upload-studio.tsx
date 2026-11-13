@@ -49,6 +49,14 @@ const CATEGORY_OPTIONS: { value: WardrobeCategory; label: string }[] = [
 
 const STYLE_OPTIONS = ["minimal", "streetwear", "smart", "utility", "classic"];
 
+type SignedUpload = {
+  fileName: string;
+  imageUrl: string;
+  uploadUrl: string;
+  mimeType: string;
+  size: number;
+};
+
 export function UploadStudio() {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [analysis, setAnalysis] = useState<UploadAnalysis[]>([]);
@@ -80,14 +88,73 @@ export function UploadStudio() {
     });
   }
 
+  async function uploadFilesToStorage(files: File[]): Promise<UploadAnalysis[]> {
+    const prepareResponse = await fetch("/api/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        files: files.map((file) => ({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+        })),
+      }),
+    });
+
+    const prepared = await prepareResponse.json() as {
+      uploads?: SignedUpload[];
+      message?: string;
+    };
+    if (!prepareResponse.ok || !Array.isArray(prepared.uploads) || prepared.uploads.length !== files.length) {
+      throw new Error(prepared.message ?? "Unable to prepare private image uploads.");
+    }
+
+    await Promise.allSettled(prepared.uploads.map((upload, index) =>
+      fetch(upload.uploadUrl, {
+        method: "PUT",
+        headers: { "Content-Type": upload.mimeType },
+        body: files[index]!,
+        credentials: "omit",
+        cache: "no-store",
+      }),
+    ));
+
+    const verifyResponse = await fetch("/api/upload/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        files: prepared.uploads.map(({ fileName, imageUrl, mimeType }) => ({
+          fileName,
+          imageUrl,
+          mimeType,
+        })),
+      }),
+    });
+    const verified = await verifyResponse.json() as {
+      analysis?: UploadAnalysis[];
+      message?: string;
+    };
+    if (!verifyResponse.ok || !Array.isArray(verified.analysis) || verified.analysis.length !== files.length) {
+      throw new Error(verified.message ?? "The uploaded images could not be verified.");
+    }
+    return verified.analysis;
+  }
+
   async function handleAnalyze(selectedFiles: FileList | null) {
     if (!selectedFiles) return;
 
     const nextFiles = Array.from(selectedFiles);
-    const invalid = nextFiles.find((file) => !uploadFormats.includes(file.type));
+    if (nextFiles.length > 8) {
+      setError("You can upload up to 8 images at a time.");
+      return;
+    }
+
+    const invalid = nextFiles.find((file) =>
+      !uploadFormats.includes(file.type) || file.size === 0 || file.size > 5 * 1024 * 1024
+    );
 
     if (invalid) {
-      setError("Please upload JPG, PNG, or WEBP files only.");
+      setError("Please upload JPG, PNG, or WEBP files up to 5 MB each.");
       return;
     }
 
@@ -127,19 +194,9 @@ export function UploadStudio() {
     setUploadedFiles(withColors);
 
     setPending(true);
-    const formData = new FormData();
-    nextFiles.forEach((file) => formData.append("files", file));
-
     try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error("Upload analysis failed.");
-
-      const payload = (await response.json()) as { analysis: UploadAnalysis[] };
-      const merged = payload.analysis.map((entry, i) => ({
+      const payload = await uploadFilesToStorage(nextFiles);
+      const merged = payload.map((entry, i) => ({
         ...entry,
         dominantColors:
           withColors[i]?.extractedColors.length
@@ -188,35 +245,29 @@ export function UploadStudio() {
           const processedDataUrl = await removeBackground(fileEntry.file);
           const processedFile = dataUrlToFile(processedDataUrl, fileEntry.file.name);
 
-          // Upload the processed (background-removed) file
-          const bgFormData = new FormData();
-          bgFormData.append("files", processedFile);
-          const bgResponse = await fetch("/api/upload", {
-            method: "POST",
-            body: bgFormData,
-          });
-          if (bgResponse.ok) {
-            const bgPayload = (await bgResponse.json()) as {
-              analysis: Array<{ imageUrl: string }>;
-            };
-            extractedItemImage = bgPayload.analysis[0]?.imageUrl;
+          // Upload directly to private Storage through a short-lived signed URL.
+          const bgPayload = await uploadFilesToStorage([processedFile]);
+          extractedItemImage = bgPayload[0]?.imageUrl;
+          if (!extractedItemImage) throw new Error("The processed image could not be stored.");
 
-            // Update preview with processed image
-            setUploadedFiles((prev) => {
-              const next = [...prev];
-              next[index] = { ...next[index]!, processedPreviewUrl: processedDataUrl };
-              return next;
-            });
-          }
+          // Update preview with processed image
+          setUploadedFiles((prev) => {
+            const next = [...prev];
+            next[index] = { ...next[index]!, processedPreviewUrl: processedDataUrl };
+            return next;
+          });
+        } catch {
+          // The original image is private and verified; background removal is optional.
+          extractedItemImage = undefined;
         } finally {
           setRemovingBg(false);
         }
       }
 
-      const itemId = `user-${Date.now()}-${index}`;
+      const itemId = crypto.randomUUID();
       const item: Partial<WardrobeItem> = {
         id: itemId,
-        name: form.name || analysisEntry.fileName,
+        name: (form.name || analysisEntry.fileName).slice(0, 80),
         category: form.category,
         color: form.color || "black",
         palette: "neutral",
@@ -258,9 +309,9 @@ export function UploadStudio() {
           </span>
           <h2 className="text-2xl font-semibold">Upload your clothing items</h2>
           <p className="text-sm leading-6 text-zinc-400">
-            Upload individual garment photos or mirror selfies. The AI extracts clothing colors
-            from the center of each image, ignoring background walls and lighting — only the center
-            65% of each image is sampled.
+            Upload individual garment photos or mirror selfies. FitMatch samples dominant colours
+            in your browser from the centre of each image. Clear, well-lit photos make these colour
+            hints more useful; you confirm the garment category and style before saving.
           </p>
 
           <label className="flex cursor-pointer flex-col items-center justify-center rounded-[24px] border border-white/10 bg-white/5 px-6 py-12 text-center transition hover:border-white/30 hover:bg-white/10">
@@ -453,6 +504,7 @@ export function UploadStudio() {
                       <label className="mb-1 block text-[11px] text-zinc-500">Item name</label>
                       <input
                         type="text"
+                        maxLength={80}
                         value={form.name}
                         onChange={(e) => updateSaveForm(index, { name: e.target.value })}
                         className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-500 outline-none focus:border-white/30"
@@ -501,6 +553,7 @@ export function UploadStudio() {
                       </label>
                       <input
                         type="text"
+                        maxLength={40}
                         value={form.color}
                         onChange={(e) => updateSaveForm(index, { color: e.target.value })}
                         className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-500 outline-none focus:border-white/30"
