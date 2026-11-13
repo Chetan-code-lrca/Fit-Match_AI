@@ -8,8 +8,8 @@ This checklist distinguishes implemented safeguards from work that requires exte
 
 - [ ] Managed authentication with server-side session verification and secure, HttpOnly, SameSite cookies.
 - [ ] Protected application routes and API handlers; no anonymous access to personal wardrobe data.
-- [ ] PostgreSQL schema and repeatable migrations.
-- [ ] Row-level security for every user-owned table; test with two independent accounts.
+- [x] Initial PostgreSQL schema migration with user ownership and RLS policies authored (not yet applied to a live project).
+- [x] Initial row-level security policies authored for wardrobe rows and private image objects.\n- [ ] Apply migration and verify row-level security with two independent live accounts.
 - [ ] Replace the global JSON file adapter; production must never read or write local wardrobe files.
 - [ ] Private object storage for original and processed photos.
 - [x] Verify upload MIME claims against JPEG, PNG and WebP file signatures.
