@@ -5,7 +5,8 @@ import path from "path";
 import { NextResponse } from "next/server";
 
 import { uploadFormats } from "@/lib/fitmatch-data";
-import { isAllowedImageSignature, rejectUnsafeProductionStorage } from "@/lib/production-safety";
+import { rejectUnsafeProductionStorage } from "@/lib/production-safety";
+import { isAllowedImageSignature } from "@/lib/image-signature";
 
 export const runtime = "nodejs";
 
