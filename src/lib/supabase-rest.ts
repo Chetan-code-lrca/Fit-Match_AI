@@ -349,6 +349,23 @@ export function supabaseApiError(
   );
 }
 
+
+export async function deleteOwnAccount(auth: AuthContext): Promise<void> {
+  const config = getConfig();
+  const response = await fetch(config.url + "/functions/v1/delete-account", {
+    method: "POST",
+    headers: {
+      apikey: config.key,
+      Authorization: "Bearer " + auth.accessToken,
+      "Content-Type": "application/json",
+    },
+    body: "{}",
+    cache: "no-store",
+  });
+  await readResponse<unknown>(response);
+  await clearAuthCookies();
+}
+
 export function isSameOriginMutation(request: Request): boolean {
   if (request.headers.get("sec-fetch-site") === "cross-site") return false;
   const origin = request.headers.get("origin");
