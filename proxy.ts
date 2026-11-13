@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const ACCESS_COOKIE = "fitmatch-access";
 const REFRESH_COOKIE = "fitmatch-refresh";
 
-function config() {
+function supabaseSettings() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_PUBLISHABLE_KEY;
@@ -11,7 +11,7 @@ function config() {
 }
 
 export async function proxy(request: NextRequest) {
-  const settings = config();
+  const settings = supabaseSettings();
   const accessToken = request.cookies.get(ACCESS_COOKIE)?.value;
   const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
   const signInUrl = new URL("/login", request.url);
@@ -49,5 +49,6 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
-export const configMatcher = { matcher: ["/dashboard/:path*", "/upload/:path*", "/suggestions/:path*", "/chat/:path*", "/settings/:path*"] };
-export const config = configMatcher;
+export const config = {
+  matcher: ["/dashboard/:path*", "/upload/:path*", "/suggestions/:path*", "/chat/:path*", "/settings/:path*"],
+};

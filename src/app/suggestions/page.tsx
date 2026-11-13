@@ -26,7 +26,7 @@ const occasions: Array<{ value: WardrobeOccasion; label: string }> = [
 
 export default async function SuggestionsPage({ searchParams }: SuggestionsPageProps) {
   const params = (await searchParams) ?? {};
-  const savedItems = readUserWardrobeItems();
+  const savedItems = await readUserWardrobeItems();
   const wardrobe = savedItems.length > 0 ? savedItems : starterWardrobe;
   const fallbackItem = wardrobe[0];
 
