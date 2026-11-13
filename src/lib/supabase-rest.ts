@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
 import type { WardrobeItem } from "@/lib/fitmatch-data";
-import { isAllowedImageSignature } from "@/lib/image-signature";
+import { ImageProcessingError, normalizeUploadedImage } from "@/lib/image-processing";
 
 const ACCESS_COOKIE = "fitmatch-access";
 const REFRESH_COOKIE = "fitmatch-refresh";
@@ -230,27 +230,52 @@ export async function deleteWardrobeItem(auth: AuthContext, id: string): Promise
 }
 
 export async function uploadPrivateImage(auth: AuthContext, file: File): Promise<{ storagePath: string; imageUrl: string }> {
-  const ext: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
-  if (!ext[file.type] || !isAllowedImageSignature(new Uint8Array(await file.slice(0, 16).arrayBuffer()), file.type)) {
-    throw new SupabaseRequestError("Image content does not match its declared type.", 415);
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    throw new SupabaseRequestError("Only JPEG, PNG and WebP images are supported.", 415);
   }
   if (file.size < 12 || file.size > 5 * 1024 * 1024) {
     throw new SupabaseRequestError("Each image must be between 12 bytes and 5 MB.", 413);
   }
-  const storagePath = auth.user.id + "/" + randomUUID() + "." + ext[file.type];
+
+  let normalized: Awaited<ReturnType<typeof normalizeUploadedImage>>;
+  try {
+    normalized = await normalizeUploadedImage(Buffer.from(await file.arrayBuffer()), file.type);
+  } catch (error) {
+    if (error instanceof ImageProcessingError) {
+      throw new SupabaseRequestError(error.message, error.status);
+    }
+    throw new SupabaseRequestError("The uploaded image could not be processed safely.", 415);
+  }
+
+  const storagePath = auth.user.id + "/" + randomUUID() + ".webp";
   const config = getConfig();
-  const response = await fetch(config.url + "/storage/v1/object/" + STORAGE_BUCKET + "/" +
-    storagePath.split("/").map(encodeURIComponent).join("/"), {
-    method: "POST",
-    headers: {
-      apikey: config.key, Authorization: "Bearer " + auth.accessToken,
-      "Content-Type": file.type, "x-upsert": "false",
+  const response = await fetch(
+    config.url + "/storage/v1/object/" + STORAGE_BUCKET + "/" +
+      storagePath.split("/").map(encodeURIComponent).join("/"),
+    {
+      method: "POST",
+      headers: {
+        apikey: config.key,
+        Authorization: "Bearer " + auth.accessToken,
+        "Content-Type": normalized.contentType,
+        "x-upsert": "false",
+      },
+      body: normalized.buffer,
+      cache: "no-store",
     },
-    body: await file.arrayBuffer(), cache: "no-store",
-  });
+  );
   await readResponse<unknown>(response);
+
   const imageUrl = await signStoragePath(storagePath, auth.accessToken);
-  if (!imageUrl) throw new SupabaseRequestError("Private image URL could not be created.", 502);
+  if (!imageUrl) {
+    await dataRequest(
+      "/storage/v1/object/" + STORAGE_BUCKET,
+      auth.accessToken,
+      { method: "DELETE", body: JSON.stringify({ prefixes: [storagePath] }) },
+    ).catch(() => undefined);
+    throw new SupabaseRequestError("Private image URL could not be created.", 502);
+  }
+
   return { storagePath, imageUrl };
 }
 

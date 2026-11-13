@@ -15,7 +15,7 @@ FitMatch AI is a wardrobe intelligence application built with Next.js. It helps 
 - Responsive dashboard, wardrobe gallery and outfit lab.
 - Email/password accounts through Supabase Auth.
 - Wardrobe records stored in PostgreSQL and restricted by Row Level Security.
-- Private clothing image uploads stored in Supabase Storage.
+- Private clothing image uploads stored in Supabase Storage; Sharp decodes and re-encodes images to metadata-free WebP.
 - Expiring signed URLs for private image access.
 - Occasion-led outfit recommendations, daily edit and stylist chat.
 - Optional OpenAI explanation enrichment.

@@ -29,7 +29,7 @@ Status: **App integration implemented; live provider verification required**
 - [ ] Integration tests against a staging Supabase project.
 - [ ] Two-account isolation: account A cannot access, update, delete or sign URLs for account B.
 - [ ] Playwright flow for sign-up, sign-in, upload, wardrobe CRUD and sign-out.
-- [ ] Dependency vulnerability review and automated update policy.
+- [x] Next.js/React runtime packages upgraded to patched releases; high/critical npm audit gate and weekly Dependabot updates configured.\n- [ ] Review and triage remaining moderate npm audit findings in the lint toolchain.
 - [ ] Error monitoring, structured logs and uptime alerting.
 - [ ] Database backups and a successful restore drill.
 - [ ] Load test critical routes and review database indexes/connection limits.
@@ -59,6 +59,6 @@ Create accounts A and B. Add different wardrobe records and photos to each. Veri
 
 ## Known limitations
 
-- File-signature checks and Storage MIME rules do not replace full image decoding/re-encoding and metadata stripping. This remains required before accepting untrusted uploads at scale.
+- Upload image decoding, resizing and metadata stripping are implemented, but still require hostile-file and staging verification before public launch.
 - No service-role key is used. API calls use each user's access token so RLS policies apply.
 - Repository CI cannot verify live Auth email delivery, SQL grants, RLS, signed URL expiry or backups; these require a live Supabase project.

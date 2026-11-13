@@ -42,11 +42,24 @@ export async function POST(request: Request) {
   }
 
   try {
-    const analysis = await Promise.all(files.map(async (file) => ({
-      fileName: file.name.slice(0, 255),
-      ...(await uploadPrivateImage(auth, file)),
-      ...inferTags(file.name),
-    })));
+    const analysis: Array<{
+      fileName: string;
+      storagePath: string;
+      imageUrl: string;
+      dominantColors: string[];
+      tags: string[];
+      occasionHint: string;
+    }> = [];
+
+    // Decode/re-encode one image at a time to bound per-request memory usage.
+    for (const file of files) {
+      const stored = await uploadPrivateImage(auth, file);
+      analysis.push({
+        fileName: file.name.slice(0, 255),
+        ...stored,
+        ...inferTags(file.name),
+      });
+    }
     return NextResponse.json({ analysis }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     const status = error instanceof SupabaseRequestError ? error.status : 500;

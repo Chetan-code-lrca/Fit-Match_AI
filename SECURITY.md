@@ -11,7 +11,7 @@ FitMatch uses Supabase Auth, PostgreSQL Row Level Security and a private Storage
 - Wardrobe records carry user ownership and are protected by database RLS.
 - Private Storage objects are namespaced by user UUID and protected by Storage RLS policies.
 - Private image reads use expiring signed URLs.
-- Uploads enforce file signatures, MIME types and file-size limits.
+- Uploads enforce file signatures, MIME types, per-file/aggregate size limits and decoded pixel limits. Sharp re-encodes accepted inputs to metadata-free WebP (auto-orientation applied) before private storage.
 - Mutating endpoints reject cross-origin requests.
 - The application uses a publishable key and each user's JWT, not a service-role key.
 
@@ -24,7 +24,7 @@ FitMatch uses Supabase Auth, PostgreSQL Row Level Security and a private Storage
 
 ## Remaining release blockers
 
-Full image decoding/re-encoding, metadata stripping, distributed rate limiting, monitoring, backup/restore verification, privacy workflows and two-account staging tests remain release blockers. Do not claim production approval until they are completed and verified.
+Distributed rate limiting, monitoring, backup/restore verification, privacy workflows and two-account staging tests remain release blockers. The image-normalization path is implemented but must still be verified against hostile files in staging. Do not claim production approval until they are completed and verified.
 
 ## Incident response
 
