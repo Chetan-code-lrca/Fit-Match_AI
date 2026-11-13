@@ -62,7 +62,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const wardrobe = await activeWardrobe();
+  let wardrobe;
+  try { wardrobe = await activeWardrobe(); }
+  catch (error) { return supabaseApiError(error, "Outfit generation is temporarily unavailable."); }
   if (!wardrobe) return NextResponse.json({ message: "Authentication required." }, { status: 401 });
   let body: { baseItemId?: string; count?: number; occasion?: WardrobeOccasion };
   try { body = await request.json() as typeof body; }

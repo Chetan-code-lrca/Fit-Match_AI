@@ -67,7 +67,6 @@ export async function POST(request: Request) {
     const message = status === 503 ? (error instanceof Error ? error.message : "Storage is not configured.")
       : status === 403 ? "Image storage access was denied."
       : status === 429 ? "Upload rate limit reached. Try again in a minute."
-      : status === 503 ? (error instanceof Error ? error.message : "Upload protection is unavailable.")
       : status === 415 || status === 413 ? (error instanceof Error ? error.message : "Unsupported image.")
       : "Unable to store these images securely.";
     return NextResponse.json({ message }, { status: status >= 500 && status !== 503 ? 502 : status, headers: status === 429 ? { "Retry-After": "60" } : { "Cache-Control": "no-store" } });

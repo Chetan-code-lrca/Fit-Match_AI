@@ -31,7 +31,7 @@ Requirements: Node.js 22.6+ and npm.
 1. Clone the repository and install dependencies with npm ci.
 2. Copy .env.example to .env.local.
 3. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.
-4. Apply supabase/migrations/202611130001_initial_schema.sql to the Supabase project.
+4. Apply both Supabase migrations in order (initial schema, then per-user API rate limits).
 5. Configure Supabase Auth URLs and the email confirmation template (see below).
 6. Run npm run dev.
 
@@ -66,6 +66,6 @@ Run npm run lint, npm run typecheck, npm test and npm run build. The npm run che
 
 ## Security and release status
 
-The code path for Auth, PostgreSQL access, RLS-owned wardrobe records and private image storage is implemented. **Public production approval is still blocked** until the migration is applied to a real Supabase project, email delivery is configured, full image decoding/re-encoding and rate limiting are added, monitoring/backups are configured, and two-account isolation is verified in staging.
+The code path for Auth, PostgreSQL access, RLS-owned wardrobe records and private image storage is implemented. **Public production approval is still blocked** until the migration is applied to a real Supabase project, email delivery is configured, the migrations are applied and verified in a live Supabase project, unauthenticated auth traffic is throttled at the edge, monitoring/backups are configured, and two-account isolation is verified in staging.
 
 See SECURITY.md and the production readiness checklist. Do not remove release checks or deploy with missing Supabase settings as a workaround.

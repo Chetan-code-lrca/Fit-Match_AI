@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 import type { WardrobeItem } from "@/lib/fitmatch-data";
 import { ImageProcessingError, normalizeUploadedImage } from "@/lib/image-processing";
 

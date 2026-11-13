@@ -41,3 +41,20 @@ test("shared filesystem wardrobe adapter is not used at runtime", async () => {
   assert.match(source, /supabase-rest/);
   assert.doesNotMatch(source, /readFileSync|writeFileSync|wardrobe\.json/);
 });
+
+test("rate-limit migration uses authenticated identity and atomic database counters", async () => {
+  const sql = await readFile(new URL("../supabase/migrations/202611130002_user_rate_limits.sql", import.meta.url), "utf8");
+  assert.match(sql, /enable row level security/i);
+  assert.match(sql, /security definer/i);
+  assert.match(sql, /auth\.uid\(\)/i);
+  assert.match(sql, /on conflict \(user_id, bucket\) do update/i);
+  assert.match(sql, /grant execute on function public\.consume_api_rate_limit.*to authenticated/is);
+  assert.match(sql, /revoke all on table public\.api_rate_limits from anon, authenticated/i);
+});
+
+test("authenticated API endpoints fail closed if the PostgreSQL rate-limit RPC is unavailable", async () => {
+  const source = await readFile(new URL("../src/lib/supabase-rest.ts", import.meta.url), "utf8");
+  assert.match(source, /rpc\/consume_api_rate_limit/);
+  assert.match(source, /Rate-limit protection is unavailable/);
+  assert.match(source, /status === 429/);
+});
