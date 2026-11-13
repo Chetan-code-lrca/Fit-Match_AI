@@ -1,7 +1,7 @@
 {
   "name": "fitmatch-ai",
   "version": "0.1.0",
-  "description": "Wardrobe-based outfit recommendations and AI-assisted styling guidance.",
+  "description": "Private wardrobe intelligence and explainable outfit matching.",
   "private": true,
   "engines": {
     "node": ">=20.9.0"
@@ -10,7 +10,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs"
   },
   "dependencies": {
     "framer-motion": "^12.38.0",

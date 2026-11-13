@@ -78,10 +78,10 @@ function scoreCandidate(
   const occasionScore = candidate.occasion.includes(occasion) ? 100 : 56;
   const versatilityScore = Math.min(100, 68 + candidate.occasion.length * 8);
   const score = Math.round(
-    pair.colorHarmonyScore * 0.28 +
-      pair.aestheticScore * 0.22 +
-      occasionScore * 0.28 +
-      versatilityScore * 0.22,
+    pair.colorHarmonyScore * 0.3 +
+      pair.aestheticScore * 0.25 +
+      occasionScore * 0.3 +
+      versatilityScore * 0.15,
   );
 
   return { score, ...pair, occasionScore, versatilityScore };

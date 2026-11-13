@@ -1,14 +1,15 @@
+import { redirect } from "next/navigation";
+
 import { AppShell } from "@/components/app-shell";
+import { getCurrentSession } from "@/lib/auth";
 import { integrationStatus } from "@/lib/config";
 import { wardrobeItems as starterWardrobe } from "@/lib/fitmatch-data";
 import { readUserWardrobeItems } from "@/lib/wardrobe-server";
 import { resolveColorHex } from "@/lib/wardrobe-visuals";
 
 const connectionLabels: Record<keyof typeof integrationStatus, string> = {
-  googleAuth: "Google authentication",
-  emailAuth: "Session authentication",
-  cloudinary: "Cloud image storage",
-  openAi: "OpenAI explanations",
+  supabase: "Authentication, database and private storage",
+  openAi: "OpenAI explanation enrichment",
   weather: "Weather context",
 };
 
@@ -18,8 +19,8 @@ const nextCapabilities = [
     description: "Record what you wear and understand cost-per-wear and underused pieces.",
   },
   {
-    title: "Private accounts and storage",
-    description: "User-isolated wardrobes, private photo storage and durable database persistence.",
+    title: "Personal style profile",
+    description: "Save silhouette preferences, fit notes and combinations to avoid for more tailored suggestions.",
   },
   {
     title: "Weather-aware outfit planning",
@@ -31,8 +32,10 @@ const nextCapabilities = [
   },
 ];
 
-export default function SettingsPage() {
-  const savedItems = readUserWardrobeItems();
+export default async function SettingsPage() {
+  const session = await getCurrentSession();
+  if (!session) redirect("/login");
+  const savedItems = await readUserWardrobeItems(session.accessToken, session.user.id);
   const wardrobe = savedItems.length > 0 ? savedItems : starterWardrobe;
   const colors = Array.from(new Set(wardrobe.map((item) => item.color)));
   const connectedCount = Object.values(integrationStatus).filter(Boolean).length;
@@ -41,7 +44,7 @@ export default function SettingsPage() {
     <AppShell
       eyebrow="Workspace configuration"
       title="Know what powers your style profile."
-      description="Review the wardrobe data FitMatch is using, check service configuration and see which capabilities are ready versus still in development."
+      description="Review your saved wardrobe, connected services and the styling capabilities still on the roadmap."
     >
       <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-[26px] border border-white/[0.08] bg-[#191d17] p-6 sm:p-7">
@@ -79,7 +82,7 @@ export default function SettingsPage() {
           </div>
 
           <p className="mt-6 border-t border-white/[0.07] pt-4 text-[10px] leading-5 text-zinc-600">
-            These signals are derived from the stored clothing metadata. The starter preview is sample data, not a personal colour or body analysis.
+            These signals are derived from your account wardrobe. A sample wardrobe is shown only until you add your own pieces.
           </p>
         </div>
 
@@ -106,7 +109,7 @@ export default function SettingsPage() {
             ))}
           </div>
           <p className="mt-4 text-[10px] leading-5 text-zinc-600">
-            Status is read from server environment variables. A configured key does not by itself confirm that an external service is healthy.
+            Configuration status confirms environment variables are present; it does not guarantee an external provider is healthy.
           </p>
         </div>
       </section>
@@ -128,9 +131,9 @@ export default function SettingsPage() {
       </section>
 
       <section className="rounded-[22px] border border-amber-200/10 bg-amber-100/[0.025] p-5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-100/70">Prototype data notice</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-100/70">Account data protection</p>
         <p className="mt-2 max-w-4xl text-xs leading-6 text-zinc-500">
-          The current wardrobe store is a local JSON file and uploaded images are saved under the public uploads directory. Authentication and private per-user storage are not implemented yet. Do not use this deployment for sensitive personal photos or as a multi-user production service.
+          Wardrobe records are scoped to your account by database row-level security. Uploaded images are stored in a private bucket and delivered through short-lived signed URLs. Keep your account credentials private and use only images you have permission to store.
         </p>
       </section>
     </AppShell>

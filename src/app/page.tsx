@@ -52,14 +52,14 @@ export default function Home() {
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
-              href="/dashboard"
+              href="/signup"
               className="inline-flex items-center gap-3 rounded-full bg-[#d3ee9c] px-6 py-3.5 text-sm font-semibold text-[#182011] transition hover:-translate-y-0.5 hover:bg-[#e0f5b8]"
             >
               Explore your wardrobe
               <span aria-hidden="true">↗</span>
             </Link>
             <Link
-              href="/upload"
+              href="/signup"
               className="inline-flex items-center rounded-full border border-white/[0.13] px-6 py-3.5 text-sm font-medium text-zinc-200 transition hover:border-white/30 hover:bg-white/[0.04]"
             >
               Build your closet
@@ -152,7 +152,7 @@ export default function Home() {
           </p>
         </div>
         <Link
-          href="/upload"
+          href="/signup"
           className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-[#d3ee9c] px-6 py-3.5 text-sm font-semibold text-[#182011] transition hover:bg-[#e0f5b8]"
         >
           Add your first pieces <span aria-hidden="true">↗</span>

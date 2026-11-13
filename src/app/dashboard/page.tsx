@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { getCurrentSession } from "@/lib/auth";
 
 import { AppShell } from "@/components/app-shell";
 import { FadeIn } from "@/components/fade-in";
@@ -24,8 +27,10 @@ const categoryLabels = [
   { key: "accessory", label: "Accessories", color: "#d5a9a2" },
 ] as const;
 
-export default function DashboardPage() {
-  const savedItems = readUserWardrobeItems();
+export default async function DashboardPage() {
+  const session = await getCurrentSession();
+  if (!session) redirect("/login");
+  const savedItems = await readUserWardrobeItems(session.accessToken, session.user.id);
   const activeWardrobe = savedItems.length > 0 ? savedItems : wardrobeItems;
   const outfitOfTheDay = buildOutfitOfTheDay(activeWardrobe);
   const topPicks = buildRecommendations(
@@ -214,7 +219,7 @@ export default function DashboardPage() {
           </div>
           <Link href="/upload" className="text-xs font-semibold text-[#d3ee9c] hover:underline">Manage pieces ↗</Link>
         </div>
-        <WardrobeGallery items={activeWardrobe} />
+        <WardrobeGallery items={activeWardrobe} allowDelete={savedItems.length > 0} />
       </FadeIn>
 
       {!savedItems.length ? (
