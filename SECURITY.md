@@ -1,32 +1,36 @@
+
 # Security and production release policy
 
-## Current release status
+FitMatch uses Supabase Auth, PostgreSQL Row Level Security and a private Storage bucket. Application data requests use the signed-in user's access token; the app does not require a Supabase service-role key.
 
-FitMatch AI is **not approved for public multi-user production** yet. The current wardrobe adapter stores records in a local JSON file and the upload adapter writes into the public directory. Those adapters are useful for local development only.
+## Implemented controls
 
-To prevent accidental exposure, the wardrobe and upload API routes return HTTP 503 whenever `NODE_ENV=production`. Do not remove this guard to make a deployment appear healthy.
+- Session credentials are stored only in HttpOnly cookies, SameSite=Lax and Secure in production.
+- Server-side Auth endpoints verify user identity with Supabase Auth and rotate refresh tokens.
+- The application proxy protects private pages. Every data API independently verifies the user.
+- Wardrobe records carry user ownership and are protected by database RLS.
+- Private Storage objects are namespaced by user UUID and protected by Storage RLS policies.
+- Private image reads use expiring signed URLs.
+- Uploads enforce file signatures, MIME types and file-size limits.
+- Mutating endpoints reject cross-origin requests.
+- The application uses a publishable key and each user's JWT, not a service-role key.
 
-## Required production architecture
+## Required provider configuration
 
-- Authentication: Supabase Auth (or an equivalent managed OIDC provider); verify sessions on the server.
-- Authorization: every wardrobe row must be scoped to the authenticated user; enforce this with database row-level security, not only UI checks.
-- Database: managed PostgreSQL with migrations, backups and least-privilege credentials.
-- Images: private object storage; validate file signatures and decode/re-encode images; serve short-lived signed URLs.
-- API: schema validation, request-size limits, per-user rate limits, CSRF/origin protection for cookie-authenticated mutations, safe error responses.
-- Operations: structured logs without tokens or image contents, error monitoring, uptime checks, backup-restore drills and rollback procedure.
+- Keep the Supabase project URL and publishable key in encrypted deployment settings.
+- Apply the checked-in SQL migration and verify database grants, RLS and bucket policies.
+- Configure the Auth Site URL, redirect URLs, confirmation email template and SMTP.
+- Configure Auth rate limits and application-level distributed rate limits.
 
-## Required secrets
+## Remaining release blockers
 
-Never commit secrets. Configure provider credentials only in the deployment platform's encrypted environment settings. The public browser bundle must never receive service-role or database-owner credentials.
-
-## Release gate
-
-A release is blocked until all P0 items in `docs/PRODUCTION_READINESS.md` are implemented and verified in a staging environment with at least two test accounts. The test must prove that one account cannot read, update, delete or obtain signed image URLs for another account's data.
+Full image decoding/re-encoding, metadata stripping, distributed rate limiting, monitoring, backup/restore verification, privacy workflows and two-account staging tests remain release blockers. Do not claim production approval until they are completed and verified.
 
 ## Incident response
 
 1. Disable uploads and wardrobe mutations.
-2. Revoke affected provider keys and sessions.
-3. Preserve redacted logs and identify impacted accounts.
-4. Restore from a verified backup only after fixing the root cause.
-5. Document the incident and verify isolation before reopening.
+2. Revoke affected Supabase sessions and rotate relevant project keys.
+3. Preserve redacted logs; never export access tokens, refresh tokens or image contents.
+4. Identify affected accounts and objects.
+5. Restore from a verified backup only after fixing the root cause.
+6. Re-run the account-isolation test before reopening.
