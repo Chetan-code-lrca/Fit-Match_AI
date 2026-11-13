@@ -4,12 +4,7 @@ export const dynamic = "force-dynamic";
 
 export function GET() {
   return NextResponse.json(
-    {
-      status: "ok",
-      service: "fitmatch-ai",
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV ?? "unknown",
-    },
+    { status: "ok", service: "fitmatch-ai", timestamp: new Date().toISOString() },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

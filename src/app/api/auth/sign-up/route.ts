@@ -22,8 +22,15 @@ export async function POST(request: Request) {
   } catch (error) {
     const status = error instanceof SupabaseRequestError ? error.status : 500;
     const message = status === 409 ? "An account with this email may already exist. Try signing in."
+      : status === 429 ? "Too many account creation attempts. Wait before trying again."
       : status === 503 ? (error instanceof Error ? error.message : "Authentication is not configured.")
       : "Unable to create the account. Check the details and try again.";
-    return NextResponse.json({ message }, { status: status === 503 ? 503 : status === 429 ? 429 : status >= 500 ? 500 : 400 });
+    return NextResponse.json(
+      { message },
+      {
+        status: status === 503 || status === 429 ? status : status >= 500 ? 502 : 400,
+        headers: { "Cache-Control": "no-store", ...(status === 429 ? { "Retry-After": "60" } : {}) },
+      },
+    );
   }
 }

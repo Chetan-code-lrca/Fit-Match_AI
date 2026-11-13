@@ -18,10 +18,6 @@ const nextCapabilities = [
     description: "Record what you wear and understand cost-per-wear and underused pieces.",
   },
   {
-    title: "Private accounts and storage",
-    description: "User-isolated wardrobes, private photo storage and durable database persistence.",
-  },
-  {
     title: "Weather-aware outfit planning",
     description: "Use a real forecast to adjust layers and outfit suggestions for the day.",
   },
@@ -41,7 +37,7 @@ export default async function SettingsPage() {
     <AppShell
       eyebrow="Workspace configuration"
       title="Know what powers your style profile."
-      description="Review the wardrobe data FitMatch is using, check service configuration and see which capabilities are ready versus still in development."
+      description="Review your saved wardrobe, connected services and privacy controls."
     >
       <section className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-[26px] border border-white/[0.08] bg-[#191d17] p-6 sm:p-7">
