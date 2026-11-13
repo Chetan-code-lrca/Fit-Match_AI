@@ -103,3 +103,24 @@ create policy "Users can delete their own wardrobe images"
     bucket_id = 'wardrobe-private'
     and (storage.foldername(name))[1] = (select auth.uid())::text
   );
+
+
+-- Grant the signed-in PostgREST role only the operations needed by this app.
+revoke all on table public.wardrobe_items from anon;
+grant select, insert, update, delete on table public.wardrobe_items to authenticated;
+
+create or replace function public.set_wardrobe_item_updated_at()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists set_wardrobe_item_updated_at on public.wardrobe_items;
+create trigger set_wardrobe_item_updated_at
+before update on public.wardrobe_items
+for each row execute function public.set_wardrobe_item_updated_at();

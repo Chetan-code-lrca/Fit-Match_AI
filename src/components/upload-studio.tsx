@@ -11,6 +11,7 @@ import { uploadFormats } from "@/lib/fitmatch-data";
 type UploadAnalysis = {
   fileName: string;
   imageUrl: string;
+  storagePath: string;
   dominantColors: string[];
   colorNames: string[];
   tags: string[];
@@ -178,44 +179,32 @@ export function UploadStudio() {
     setSaveError("");
 
     try {
-      const imageUrl = analysisEntry.imageUrl;
-      let extractedItemImage: string | undefined;
-
-      // Optionally remove background
+      let extractedImagePath: string | undefined;
       if (form.removeBackground) {
         setRemovingBg(true);
         try {
           const processedDataUrl = await removeBackground(fileEntry.file);
           const processedFile = dataUrlToFile(processedDataUrl, fileEntry.file.name);
-
-          // Upload the processed (background-removed) file
           const bgFormData = new FormData();
           bgFormData.append("files", processedFile);
-          const bgResponse = await fetch("/api/upload", {
-            method: "POST",
-            body: bgFormData,
-          });
+          const bgResponse = await fetch("/api/upload", { method: "POST", body: bgFormData });
           if (bgResponse.ok) {
-            const bgPayload = (await bgResponse.json()) as {
-              analysis: Array<{ imageUrl: string }>;
-            };
-            extractedItemImage = bgPayload.analysis[0]?.imageUrl;
-
-            // Update preview with processed image
+            const bgPayload = await bgResponse.json() as { analysis: Array<{ storagePath: string }> };
+            extractedImagePath = bgPayload.analysis[0]?.storagePath;
             setUploadedFiles((prev) => {
               const next = [...prev];
               next[index] = { ...next[index]!, processedPreviewUrl: processedDataUrl };
               return next;
             });
           }
+        } catch {
+          // Background removal is optional; the original private image remains usable.
         } finally {
           setRemovingBg(false);
         }
       }
 
-      const itemId = `user-${Date.now()}-${index}`;
-      const item: Partial<WardrobeItem> = {
-        id: itemId,
+      const item: Partial<WardrobeItem> & { imagePath?: string; extractedImagePath?: string } = {
         name: form.name || analysisEntry.fileName,
         category: form.category,
         color: form.color || "black",
@@ -223,8 +212,8 @@ export function UploadStudio() {
         occasion: ["campus", "travel", "smart-casual"],
         season: ["spring", "summer", "autumn", "winter"],
         tags: analysisEntry.tags,
-        imageUrl,
-        extractedItemImage,
+        imagePath: analysisEntry.storagePath,
+        extractedImagePath,
         style: form.style || undefined,
       };
 
@@ -233,11 +222,10 @@ export function UploadStudio() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(item),
       });
-
       if (!response.ok) {
-        throw new Error("Failed to save item to wardrobe.");
+        const payload = await response.json().catch(() => ({})) as { message?: string };
+        throw new Error(payload.message ?? "Failed to save item to wardrobe.");
       }
-
       setSavedIds((prev) => new Set([...prev, index]));
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "Unable to save item.");

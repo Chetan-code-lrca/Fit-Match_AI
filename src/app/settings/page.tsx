@@ -1,12 +1,11 @@
 import { AppShell } from "@/components/app-shell";
 import { integrationStatus } from "@/lib/config";
-import { wardrobeItems as starterWardrobe } from "@/lib/fitmatch-data";
 import { readUserWardrobeItems } from "@/lib/wardrobe-server";
 import { resolveColorHex } from "@/lib/wardrobe-visuals";
 
 const connectionLabels: Record<keyof typeof integrationStatus, string> = {
-  googleAuth: "Google authentication",
-  emailAuth: "Session authentication",
+  googleAuth: "Google OAuth provider",
+  emailAuth: "Supabase email authentication",
   cloudinary: "Cloud image storage",
   openAi: "OpenAI explanations",
   weather: "Weather context",
@@ -31,9 +30,9 @@ const nextCapabilities = [
   },
 ];
 
-export default function SettingsPage() {
-  const savedItems = readUserWardrobeItems();
-  const wardrobe = savedItems.length > 0 ? savedItems : starterWardrobe;
+export default async function SettingsPage() {
+  const savedItems = await readUserWardrobeItems();
+  const wardrobe = savedItems;
   const colors = Array.from(new Set(wardrobe.map((item) => item.color)));
   const connectedCount = Object.values(integrationStatus).filter(Boolean).length;
 
@@ -128,9 +127,9 @@ export default function SettingsPage() {
       </section>
 
       <section className="rounded-[22px] border border-amber-200/10 bg-amber-100/[0.025] p-5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-100/70">Prototype data notice</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-100/70">Privacy and AI notice</p>
         <p className="mt-2 max-w-4xl text-xs leading-6 text-zinc-500">
-          The current wardrobe store is a local JSON file and uploaded images are saved under the public uploads directory. Authentication and private per-user storage are not implemented yet. Do not use this deployment for sensitive personal photos or as a multi-user production service.
+          Wardrobe rows are scoped to your account by database Row Level Security. Uploaded photos use a private bucket and expiring signed URLs. A live project migration and two-account staging verification are still required before public launch.
         </p>
       </section>
     </AppShell>
