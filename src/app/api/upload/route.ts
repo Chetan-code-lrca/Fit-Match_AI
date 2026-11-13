@@ -37,12 +37,12 @@ export async function POST(request: Request) {
   if (entries.length > MAX_FILES || entries.some((entry) => !(entry instanceof File))) return NextResponse.json({ message: "Upload one valid image per request." }, { status: 400 });
   const files = entries as File[];
   if (files.reduce((sum, file) => sum + file.size, 0) > MAX_TOTAL_SIZE) return NextResponse.json({ message: "Each request is limited to one image up to 4 MB." }, { status: 413 });
-  if (files.some((file) => !allowedTypes.includes(file.type) || file.size < 12 || file.size > 5 * 1024 * 1024)) {
+  if (files.some((file) => !allowedTypes.includes(file.type) || file.size < 12 || file.size > MAX_TOTAL_SIZE)) {
     return NextResponse.json({ message: "Only JPG, PNG and WEBP images up to 4 MB are supported." }, { status: 415 });
   }
 
   try {
-    await enforceUserRateLimit(auth, "uploads", 60, 5);
+    await enforceUserRateLimit(auth, "uploads", 60, 10);
     const analysis: Array<{
       fileName: string;
       storagePath: string;
