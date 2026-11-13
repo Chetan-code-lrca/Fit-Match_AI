@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { wardrobeItems, type WardrobeOccasion } from "@/lib/fitmatch-data";
-import { getAuthenticatedUser, listWardrobeItems } from "@/lib/supabase-rest";
+import { getAuthenticatedUser, listWardrobeItems, enforceUserRateLimit, supabaseApiError } from "@/lib/supabase-rest";
 import { generateOutfits, type GeneratedOutfit } from "@/lib/style-engine";
 
 const validOccasions: WardrobeOccasion[] = ["campus", "travel", "smart-casual", "streetwear", "night-out"];
@@ -43,12 +43,15 @@ function readCount(value: string | null) {
 async function activeWardrobe() {
   const auth = await getAuthenticatedUser();
   if (!auth) return null;
+  await enforceUserRateLimit(auth, "outfits", 60, 20);
   const saved = await listWardrobeItems(auth);
   return saved.length ? saved : wardrobeItems;
 }
 
 export async function GET(request: Request) {
-  const wardrobe = await activeWardrobe();
+  let wardrobe;
+  try { wardrobe = await activeWardrobe(); }
+  catch (error) { return supabaseApiError(error, "Outfit generation is temporarily unavailable."); }
   if (!wardrobe) return NextResponse.json({ message: "Authentication required." }, { status: 401 });
   const { searchParams } = new URL(request.url);
   const selected = searchParams.get("item");

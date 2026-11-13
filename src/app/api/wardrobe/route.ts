@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { WardrobeItem } from "@/lib/fitmatch-data";
 import {
   deleteWardrobeItem, getAuthenticatedUser, insertWardrobeItem, isSameOriginMutation,
-  listWardrobeItems, SupabaseRequestError,
+  listWardrobeItems, SupabaseRequestError, enforceUserRateLimit,
 } from "@/lib/supabase-rest";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +20,7 @@ export async function GET() {
   const auth = await getAuthenticatedUser();
   if (!auth) return NextResponse.json({ message: "Authentication required." }, { status: 401 });
   try {
+    await enforceUserRateLimit(auth, "wardrobe_read", 60, 60);
     return NextResponse.json({ items: await listWardrobeItems(auth) }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) { return errorResponse(error); }
 }
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    await enforceUserRateLimit(auth, "wardrobe_write", 60, 20);
     const item = await insertWardrobeItem(auth, body);
     return NextResponse.json({ item }, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (error) { return errorResponse(error); }
@@ -64,6 +66,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ message: "A valid wardrobe item id is required." }, { status: 400 });
   }
   try {
+    await enforceUserRateLimit(auth, "wardrobe_write", 60, 20);
     await deleteWardrobeItem(auth, id);
     return NextResponse.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) { return errorResponse(error); }
