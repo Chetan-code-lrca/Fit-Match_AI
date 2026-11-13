@@ -64,3 +64,19 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  edge-functions:
+    name: Supabase Edge Function typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Typecheck Edge Functions
+        run: deno check supabase/functions/delete-account/index.ts
