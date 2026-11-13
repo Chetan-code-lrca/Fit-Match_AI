@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "description": "Wardrobe-based outfit recommendations and AI-assisted styling guidance.",
   "private": true,
-  "engines": { "node": ">=22.0.0" },
+  "engines": {
+    "node": ">=22.6.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
