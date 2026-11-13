@@ -44,8 +44,14 @@ export async function normalizeUploadedImage(
       sequentialRead: true,
       failOn: "warning",
     }).metadata();
-  } catch {
-    throw new ImageProcessingError("The uploaded image could not be decoded safely.", 415);
+  } catch (error) {
+    const exceedsPixelBudget = error instanceof Error && /pixel limit|too many pixels|image size limit/i.test(error.message);
+    throw new ImageProcessingError(
+      exceedsPixelBudget
+        ? "Image dimensions exceed the 20-megapixel processing limit."
+        : "The uploaded image could not be decoded safely.",
+      exceedsPixelBudget ? 413 : 415,
+    );
   }
 
   if (metadata.format !== expectedFormat || !metadata.width || !metadata.height) {
